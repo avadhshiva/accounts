@@ -1,0 +1,52 @@
+import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { z } from "zod";
+import { getSessionUser } from "@/lib/auth";
+import { interviewReply } from "@/lib/ai";
+import { canUse } from "@/lib/limits";
+import { updateDb } from "@/lib/store";
+
+const schema = z.object({
+  mode: z.enum(["hr", "genai", "sde"]),
+});
+
+export async function POST(req: Request) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: "Login required" }, { status: 401 });
+
+  try {
+    const body = schema.parse(await req.json());
+    if (!canUse(user.plan, user.usage, "mockInterviews")) {
+      return NextResponse.json(
+        { error: "Free limit reached (3 mock interviews / month).", code: "LIMIT" },
+        { status: 402 },
+      );
+    }
+
+    const first = await interviewReply({ mode: body.mode, history: [] });
+    const session = await updateDb((db) => {
+      const u = db.users.find((x) => x.id === user.id);
+      if (u) u.usage.mockInterviews += 1;
+      const row = {
+        id: randomUUID(),
+        userId: user.id,
+        mode: body.mode,
+        createdAt: new Date().toISOString(),
+        status: "active" as const,
+        messages: [
+          {
+            role: "coach" as const,
+            content: first.message || "Tell me about yourself.",
+            at: new Date().toISOString(),
+          },
+        ],
+      };
+      db.interviews.unshift(row);
+      return row;
+    });
+
+    return NextResponse.json({ session });
+  } catch {
+    return NextResponse.json({ error: "Could not start interview" }, { status: 400 });
+  }
+}
