@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser, destroySession } from "@/lib/auth";
+import { getAccessSnapshot } from "@/lib/access";
 import { LIMITS } from "@/lib/limits";
 
 const links = [
@@ -26,9 +27,19 @@ export async function AppShell({
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+  const access = getAccessSnapshot(user);
+  if (!access.allowed) redirect("/unlock");
 
   return (
     <div className="min-h-screen">
+      {access.access === "trial" ? (
+        <div className="bg-[var(--ink)] px-5 py-2 text-center text-sm text-[#f8f4ec]">
+          Trial time left: <strong>{access.remainingLabel}</strong> · unlock ₹{access.priceInr}{" "}
+          <Link href="/unlock" className="underline">
+            Unlock now
+          </Link>
+        </div>
+      ) : null}
       <header className="border-b border-[var(--line)] bg-[rgba(250,248,243,0.85)] backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
           <div className="flex items-center gap-6">
@@ -45,8 +56,11 @@ export async function AppShell({
           </div>
           <div className="flex items-center gap-3 text-sm">
             <span className="rounded-full bg-[var(--sand-2)] px-3 py-1 font-medium capitalize">
-              {user.plan} · {user.usage.resumeAnalyses}/{LIMITS[user.plan].resumeAnalyses} resumes
+              {user.access} · {user.usage.resumeAnalyses}/{LIMITS[user.plan].resumeAnalyses} resumes
             </span>
+            <Link href="/unlock" className="btn btn-ghost px-3 py-1.5 text-xs">
+              Unlock
+            </Link>
             <form action={logoutAction}>
               <button className="btn btn-ghost px-3 py-1.5 text-xs" type="submit">
                 Log out

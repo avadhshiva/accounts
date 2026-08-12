@@ -1,6 +1,7 @@
 export type InterviewMode = "hr" | "genai" | "technical" | "aptitude";
 
 export type Plan = "free" | "pro";
+export type AccessStatus = "trial" | "paid" | "invite";
 
 export type User = {
   id: string;
@@ -8,6 +9,13 @@ export type User = {
   email: string;
   passwordHash: string;
   plan: Plan;
+  /** trial = 30-min free window; paid/invite = full access */
+  access: AccessStatus;
+  trialStartedAt: string;
+  paidAt?: string;
+  inviteCode?: string;
+  /** Rotates on each login so only one active session works */
+  sessionVersion: number;
   college?: string;
   targetRole?: string;
   createdAt: string;

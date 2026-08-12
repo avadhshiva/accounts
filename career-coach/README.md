@@ -4,8 +4,11 @@ Campus-to-corporate practice app for Indian engineering students:
 - Resume ATS-style scoring + rewrites
 - Mock interviews: **Technical/Coding**, **Aptitude**, HR, GenAI
 - Learning tracks: GenAI, Coding & Technical, Aptitude & Reasoning
+- **Interactive visual roadmaps** (click nodes, diagrams, checklists, progress %)
 - Aptitude drill with explanations
 - Free limits + one-click Pro for test users
+- **30-min trial** after signup, then **/unlock** (invite code or ₹500 UPI/manual)
+- **Single active login** (new login signs out older sessions)
 
 ## Quick start (test users tomorrow)
 

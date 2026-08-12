@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { ensureUserDefaults } from "./access";
 import { readDb, updateDb } from "./store";
 import { Plan, User } from "./types";
 
@@ -23,8 +24,8 @@ export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
 }
 
-export async function createSession(userId: string) {
-  const token = await new SignJWT({ sub: userId })
+export async function createSession(userId: string, sessionVersion: number) {
+  const token = await new SignJWT({ sub: userId, sv: sessionVersion })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("30d")
@@ -54,14 +55,22 @@ export async function getSessionUser(): Promise<User | null> {
     const userId = payload.sub;
     if (!userId) return null;
     const db = await readDb();
-    const user = db.users.find((u) => u.id === userId) || null;
+    let user = db.users.find((u) => u.id === userId) || null;
     if (!user) return null;
-    // rollover monthly usage
+    user = ensureUserDefaults(user);
+
+    const tokenSv = typeof payload.sv === "number" ? payload.sv : 1;
+    if (tokenSv !== user.sessionVersion) {
+      // Logged in elsewhere — this session is revoked
+      return null;
+    }
+
     const mk = monthKey();
     if (user.usage.monthKey !== mk) {
       return updateDb((d) => {
-        const u = d.users.find((x) => x.id === user.id);
+        const u = d.users.find((x) => x.id === user!.id);
         if (u) {
+          ensureUserDefaults(u);
           u.usage = { resumeAnalyses: 0, mockInterviews: 0, monthKey: mk };
         }
         return u || user;
@@ -74,14 +83,18 @@ export async function getSessionUser(): Promise<User | null> {
 }
 
 export function publicUser(user: User) {
+  const u = ensureUserDefaults(user);
   return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    plan: user.plan as Plan,
-    college: user.college || "",
-    targetRole: user.targetRole || "",
-    usage: user.usage,
-    createdAt: user.createdAt,
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    plan: u.plan as Plan,
+    access: u.access,
+    trialStartedAt: u.trialStartedAt,
+    paidAt: u.paidAt || null,
+    college: u.college || "",
+    targetRole: u.targetRole || "",
+    usage: u.usage,
+    createdAt: u.createdAt,
   };
 }

@@ -38,13 +38,17 @@ export default async function DashboardPage() {
               Aptitude drill
             </Link>
           </div>
-          {user.plan === "free" ? (
+          {user.plan === "free" || user.access === "trial" ? (
             <div className="mt-5 rounded-2xl border border-dashed border-[var(--line)] bg-white/60 p-4 text-sm">
-              <p className="font-medium">Test users: unlock Pro limits with one click</p>
+              <p className="font-medium">Trial / pilot unlock</p>
               <p className="mt-1 text-[var(--ink-soft)]">
-                Payments come later. For tomorrow’s pilot, enable Pro on this account.
+                Free use is timed (30 min). After that open Unlock — invite code for feedback students, or ₹500
+                payment when enabled.
               </p>
-              <div className="mt-3">
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link href="/unlock" className="btn btn-accent text-sm">
+                  Open unlock
+                </Link>
                 <EnableProButton />
               </div>
             </div>

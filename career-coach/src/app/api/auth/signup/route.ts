@@ -7,6 +7,7 @@ import {
   monthKey,
   publicUser,
 } from "@/lib/auth";
+import { getAccessSnapshot } from "@/lib/access";
 import { updateDb } from "@/lib/store";
 
 const schema = z.object({
@@ -26,15 +27,19 @@ export async function POST(req: Request) {
       if (db.users.some((u) => u.email === email)) {
         throw new Error("EMAIL_TAKEN");
       }
+      const now = new Date().toISOString();
       const created = {
         id: randomUUID(),
         name: body.name.trim(),
         email,
         passwordHash: await hashPassword(body.password),
         plan: "free" as const,
+        access: "trial" as const,
+        trialStartedAt: now,
+        sessionVersion: 1,
         college: body.college?.trim() || "",
         targetRole: body.targetRole?.trim() || "SDE Fresher",
-        createdAt: new Date().toISOString(),
+        createdAt: now,
         usage: {
           resumeAnalyses: 0,
           mockInterviews: 0,
@@ -45,8 +50,11 @@ export async function POST(req: Request) {
       return created;
     });
 
-    await createSession(user.id);
-    return NextResponse.json({ user: publicUser(user) });
+    await createSession(user.id, user.sessionVersion);
+    return NextResponse.json({
+      user: publicUser(user),
+      access: getAccessSnapshot(user),
+    });
   } catch (e) {
     if (e instanceof Error && e.message === "EMAIL_TAKEN") {
       return NextResponse.json({ error: "Email already registered" }, { status: 409 });

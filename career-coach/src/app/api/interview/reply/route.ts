@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getSessionUser } from "@/lib/auth";
 import { interviewReply } from "@/lib/ai";
+import { assertFeatureAccess } from "@/lib/guard";
 import { updateDb } from "@/lib/store";
 
 const schema = z.object({
@@ -11,8 +11,9 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
-  const user = await getSessionUser();
-  if (!user) return NextResponse.json({ error: "Login required" }, { status: 401 });
+  const gate = await assertFeatureAccess();
+  if (gate.error) return gate.error;
+  const user = gate.user!;
 
   try {
     const body = schema.parse(await req.json());
