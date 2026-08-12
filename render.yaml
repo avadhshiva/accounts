@@ -1,0 +1,31 @@
+# Render blueprint — deploy from repo root (monorepo)
+# Dashboard: New → Blueprint → connect GitHub repo → pick branch cursor/ai-career-coach-mvp-8c82
+
+services:
+  - type: web
+    name: pathly-pilot
+    runtime: node
+    rootDir: career-coach
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: PILOT_MODE
+        value: "true"
+      - key: TRIAL_MINUTES
+        value: "2880"
+      - key: ALLOW_MANUAL_UNLOCK
+        value: "false"
+      - key: ALLOW_TEST_PRO
+        value: "false"
+      - key: NEXT_PUBLIC_APP_NAME
+        value: Pathly
+    disk:
+      name: pathly-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
