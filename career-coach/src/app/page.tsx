@@ -18,8 +18,8 @@ export default async function HomePage() {
             Learn
           </Link>
           {user ? (
-            <Link href="/dashboard" className="btn btn-primary text-sm">
-              Open dashboard
+            <Link href="/unlock" className="btn btn-primary text-sm">
+              Open app
             </Link>
           ) : (
             <>

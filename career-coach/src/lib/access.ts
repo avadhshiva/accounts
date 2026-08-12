@@ -12,9 +12,10 @@ export const UNLOCK_PRICE_INR = Number(process.env.UNLOCK_PRICE_INR || 500);
 export type AccessSnapshot = {
   allowed: boolean;
   access: AccessStatus;
-  reason: "ok" | "trial_expired" | "payment_required";
-  trialStartedAt: string;
-  trialEndsAt: string;
+  reason: "ok" | "trial_not_started" | "trial_expired" | "payment_required";
+  trialStarted: boolean;
+  trialStartedAt: string | null;
+  trialEndsAt: string | null;
   remainingMs: number;
   remainingLabel: string;
   priceInr: number;
@@ -22,10 +23,15 @@ export type AccessSnapshot = {
   trialHours: number;
 };
 
+function hasTrialStarted(user: User) {
+  return Boolean(user.trialStartedAt && user.trialStartedAt.length > 0);
+}
+
 function normalizeUserAccess(user: User): User {
   if (!user.access) user.access = "trial";
-  if (!user.trialStartedAt) user.trialStartedAt = user.createdAt || new Date().toISOString();
   if (typeof user.sessionVersion !== "number") user.sessionVersion = 1;
+  // Do NOT auto-start trial from createdAt — user must click Start trial
+  if (user.trialStartedAt === undefined) user.trialStartedAt = "";
   return user;
 }
 
@@ -33,32 +39,30 @@ export function ensureUserDefaults(user: User): User {
   return normalizeUserAccess(user);
 }
 
+/** Live clock with seconds (for banner + unlock page) */
 export function formatRemaining(ms: number) {
-  if (ms <= 0) return "0:00";
+  if (ms <= 0) return "0:00:00";
   const totalSec = Math.ceil(ms / 1000);
   const d = Math.floor(totalSec / 86400);
   const h = Math.floor((totalSec % 86400) / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
-  if (d > 0) return `${d}d ${h}h ${m}m`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}:${String(s).padStart(2, "0")}`;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  if (d > 0) return `${d}d ${pad(h)}h ${pad(m)}m ${pad(s)}s`;
+  return `${pad(h)}h ${pad(m)}m ${pad(s)}s`;
 }
 
 export function getAccessSnapshot(user: User, now = Date.now()): AccessSnapshot {
   const u = normalizeUserAccess(user);
-  const trialStartedAt = u.trialStartedAt;
-  const trialEndsAt = new Date(
-    new Date(trialStartedAt).getTime() + TRIAL_MINUTES * 60 * 1000,
-  ).toISOString();
-  const remainingMs = Math.max(0, new Date(trialEndsAt).getTime() - now);
   const trialHours = Math.round((TRIAL_MINUTES / 60) * 10) / 10;
+  const started = hasTrialStarted(u);
 
   const base = {
-    trialStartedAt,
-    trialEndsAt,
-    remainingMs,
-    remainingLabel: formatRemaining(remainingMs),
+    trialStarted: started,
+    trialStartedAt: started ? u.trialStartedAt : null,
+    trialEndsAt: null as string | null,
+    remainingMs: 0,
+    remainingLabel: started ? "0:00:00" : "—",
     priceInr: UNLOCK_PRICE_INR,
     pilotMode: PILOT_MODE,
     trialHours,
@@ -71,13 +75,37 @@ export function getAccessSnapshot(user: User, now = Date.now()): AccessSnapshot 
       allowed: true,
       access: u.access,
       reason: "ok",
+      trialStarted: true,
     };
   }
 
-  // Active trial window
-  if (remainingMs > 0) {
+  // Pilot: must click Start trial before exploring
+  if (!started) {
     return {
       ...base,
+      allowed: false,
+      access: "trial",
+      reason: "trial_not_started",
+    };
+  }
+
+  const trialEndsAt = new Date(
+    new Date(u.trialStartedAt).getTime() + TRIAL_MINUTES * 60 * 1000,
+  ).toISOString();
+  const remainingMs = Math.max(0, new Date(trialEndsAt).getTime() - now);
+
+  const withTimer = {
+    ...base,
+    trialStarted: true,
+    trialStartedAt: u.trialStartedAt,
+    trialEndsAt,
+    remainingMs,
+    remainingLabel: formatRemaining(remainingMs),
+  };
+
+  if (remainingMs > 0) {
+    return {
+      ...withTimer,
       allowed: true,
       access: "trial",
       reason: "ok",
@@ -85,12 +113,12 @@ export function getAccessSnapshot(user: User, now = Date.now()): AccessSnapshot 
   }
 
   return {
-    ...base,
+    ...withTimer,
     allowed: false,
     access: "trial",
     reason: PILOT_MODE ? "trial_expired" : "payment_required",
     remainingMs: 0,
-    remainingLabel: "0:00",
+    remainingLabel: "0:00:00",
   };
 }
 

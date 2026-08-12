@@ -11,6 +11,7 @@ export type User = {
   plan: Plan;
   /** trial = timed free window; paid/invite = full access */
   access: AccessStatus;
+  /** Set when user clicks Start trial; empty until then */
   trialStartedAt: string;
   paidAt?: string;
   inviteCode?: string;

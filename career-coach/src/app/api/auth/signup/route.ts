@@ -37,7 +37,7 @@ export async function POST(req: Request) {
         // Pilot: open limits so students can explore freely during trial
         plan: pilot ? ("pro" as const) : ("free" as const),
         access: "trial" as const,
-        trialStartedAt: now,
+        trialStartedAt: "",
         sessionVersion: 1,
         college: body.college?.trim() || "",
         targetRole: body.targetRole?.trim() || "SDE Fresher",

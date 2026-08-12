@@ -4,11 +4,14 @@ import { getSessionUser } from "@/lib/auth";
 import { readDb } from "@/lib/store";
 import { TRACKS, totalLessonCount } from "@/lib/content";
 import { LIMITS } from "@/lib/limits";
+import { getAccessSnapshot } from "@/lib/access";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+  const access = getAccessSnapshot(user);
+  if (!access.allowed) redirect("/unlock");
   const db = await readDb();
   const resumes = db.resumes.filter((r) => r.userId === user.id).slice(0, 3);
   const interviews = db.interviews.filter((i) => i.userId === user.id).slice(0, 3);
@@ -37,12 +40,12 @@ export default async function DashboardPage() {
               Aptitude drill
             </Link>
           </div>
-          {user.access === "trial" ? (
+          {user.access === "trial" && access.trialStarted ? (
             <div className="mt-5 rounded-2xl border border-dashed border-[var(--line)] bg-white/60 p-4 text-sm">
-              <p className="font-medium">Pilot: 48-hour explore + feedback</p>
+              <p className="font-medium">Pilot: explore + feedback</p>
               <p className="mt-1 text-[var(--ink-soft)]">
-                No payment in this round. Try everything, then send feedback so we build what students
-                actually need.
+                Trial ends in <strong className="tabular-nums">{access.remainingLabel}</strong>. Try
+                everything, then send feedback.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link href="/feedback" className="btn btn-accent text-sm">

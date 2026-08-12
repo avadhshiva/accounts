@@ -31,7 +31,7 @@ export default function SignupPage() {
       setError(data.error || "Signup failed");
       return;
     }
-    router.push("/dashboard");
+    router.push("/unlock");
     router.refresh();
   }
 

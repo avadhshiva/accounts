@@ -16,11 +16,10 @@ const links = [
 type AccessInfo = {
   allowed: boolean;
   access: string;
+  reason: string;
   remainingLabel: string;
   remainingMs: number;
-  priceInr: number;
-  pilotMode?: boolean;
-  trialHours?: number;
+  trialStarted: boolean;
 };
 
 export function AppShellClient({
@@ -48,14 +47,14 @@ export function AppShellClient({
         setPlanLabel(data.user.access || data.user.plan);
         setAccess(data.access);
         setReady(true);
-        if (data.access && !data.access.allowed) {
+        if (!data.access?.allowed) {
           router.replace("/unlock");
           return;
         }
-        if (data.access?.access === "trial" && data.access.allowed) {
+        if (data.access?.trialStarted && data.access.allowed) {
           timer = setInterval(() => {
             setAccess((prev) => {
-              if (!prev) return prev;
+              if (!prev || !prev.trialStarted) return prev;
               const remainingMs = Math.max(0, prev.remainingMs - 1000);
               if (remainingMs <= 0) {
                 router.replace("/unlock");
@@ -86,9 +85,10 @@ export function AppShellClient({
 
   return (
     <div className="min-h-screen">
-      {access?.access === "trial" && access.allowed ? (
+      {access?.trialStarted && access.allowed ? (
         <div className="bg-[var(--ink)] px-5 py-2 text-center text-sm text-[#f8f4ec]">
-          Pilot trial ends in <strong>{access.remainingLabel}</strong> · explore freely ·{" "}
+          Pilot trial ends in <strong className="tabular-nums">{access.remainingLabel}</strong> · explore
+          freely ·{" "}
           <Link href="/feedback" className="underline">
             Share feedback
           </Link>
@@ -118,6 +118,9 @@ export function AppShellClient({
             </span>
             <Link href="/feedback" className="btn btn-ghost px-3 py-1.5 text-xs">
               Feedback
+            </Link>
+            <Link href="/unlock" className="btn btn-ghost px-3 py-1.5 text-xs">
+              Trial
             </Link>
             <button
               className="btn btn-ghost px-3 py-1.5 text-xs"
