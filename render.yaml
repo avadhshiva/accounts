@@ -1,5 +1,8 @@
 # Render blueprint — deploy from repo root (monorepo)
-# Dashboard: New → Blueprint → connect GitHub repo → pick branch cursor/ai-career-coach-mvp-8c82
+# Dashboard: New → Blueprint → branch cursor/ai-career-coach-mvp-8c82
+#
+# Free tier: no persistent disk — signups live in data/db.json but may reset on
+# redeploy/restart. For pilot: use Google Form feedback (NEXT_PUBLIC_FEEDBACK_FORM_URL).
 
 services:
   - type: web
@@ -25,7 +28,3 @@ services:
         value: "false"
       - key: NEXT_PUBLIC_APP_NAME
         value: Pathly
-    disk:
-      name: pathly-data
-      mountPath: /opt/render/project/src/data
-      sizeGB: 1
