@@ -19,8 +19,13 @@ Give 4–5 students a **public URL**, 48-hour trial, collect feedback. **No paym
 7. Add a **volume** at `/app/data` (or path matching `data/`) so signups/feedback persist  
 8. Generate domain → share `https://your-app.up.railway.app`
 
-### 2) Render
-Same idea: Web Service, root `career-coach`, build/start as above, persistent disk for `data/`.
+### 2) Render (free — no disk)
+1. https://dashboard.render.com → **New** → **Blueprint**
+2. Connect repo `avadhshiva/accounts`, branch `cursor/ai-career-coach-mvp-8c82`
+3. `render.yaml` has **no disk** (free tier requirement)
+4. After deploy, copy your `https://pathly-pilot.onrender.com` URL
+
+**Free tier limits:** app may sleep when idle (first load ~30–60s). Student accounts in `data/db.json` may reset on redeploy — use **Google Form** for feedback (`NEXT_PUBLIC_FEEDBACK_FORM_URL` in env).
 
 ### Avoid for now: plain Vercel
 JSON file DB can reset on serverless. Use Vercel only after Postgres/Turso.
