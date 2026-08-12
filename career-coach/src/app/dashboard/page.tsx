@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { getSessionUser } from "@/lib/auth";
 import { readDb } from "@/lib/store";
-import { TRACK } from "@/lib/content";
+import { TRACKS, totalLessonCount } from "@/lib/content";
 import { LIMITS } from "@/lib/limits";
 import { redirect } from "next/navigation";
 import { EnableProButton } from "@/components/EnableProButton";
@@ -32,7 +32,10 @@ export default async function DashboardPage() {
               Start interview
             </Link>
             <Link href="/learn" className="btn btn-ghost text-sm">
-              GenAI track
+              Learning tracks
+            </Link>
+            <Link href="/practice" className="btn btn-ghost text-sm">
+              Aptitude drill
             </Link>
           </div>
           {user.plan === "free" ? (
@@ -52,7 +55,7 @@ export default async function DashboardPage() {
           <p className="mt-2 text-xl font-semibold">{user.targetRole || "SDE Fresher"}</p>
           <p className="mt-2 text-sm text-[var(--ink-soft)]">{user.college || "College not set"}</p>
           <p className="mt-6 text-sm text-[var(--ink-soft)]">
-            Track: {TRACK.title} · {TRACK.lessons.length} lessons
+            {TRACKS.length} tracks · {totalLessonCount()} lessons · Technical + Aptitude mocks
           </p>
         </div>
       </div>

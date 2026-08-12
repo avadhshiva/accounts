@@ -44,7 +44,7 @@ export default async function HomePage() {
               Pathly
             </h1>
             <p className="mt-3 max-w-xl text-xl text-[var(--ink-soft)] md:text-2xl">
-              AI career coach for fresher resumes, mock interviews, and GenAI job readiness.
+              AI career coach for resumes, technical interviews, aptitude, and GenAI job readiness.
             </p>
             <p className="mt-5 max-w-lg text-base leading-relaxed text-[var(--ink-soft)]/90">
               Built for Indian engineering students who need practice that feels like a real hiring loop — not generic ChatGPT chats.
@@ -73,8 +73,8 @@ export default async function HomePage() {
             <ul className="mt-6 space-y-3 text-sm">
               {[
                 "Resume score + rewrite suggestions",
-                "HR / GenAI / SDE mock interviews",
-                "GenAI basics track with quizzes",
+                "Technical, Aptitude, HR & GenAI mocks",
+                "3 learning tracks + aptitude drills",
               ].map((item) => (
                 <li key={item} className="flex gap-2 rounded-2xl bg-white/70 px-3 py-3 border border-[var(--line)]">
                   <span className="mt-0.5 text-[var(--accent)]">▸</span>
@@ -88,24 +88,29 @@ export default async function HomePage() {
         <section id="features" className="mx-auto max-w-6xl px-5 pb-24">
           <h2 className="display text-3xl font-semibold md:text-4xl">One job: get you interview-ready</h2>
           <p className="mt-3 max-w-2xl text-[var(--ink-soft)]">
-            Pathly keeps the first version focused — resume, mocks, and a short GenAI track.
+            Built for campus placement loops — resume, coding/technical rounds, aptitude, and GenAI literacy.
           </p>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
+          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 title: "Resume Studio",
-                body: "Paste your resume, pick a target role, get an ATS-style score, gaps, and improved bullets.",
+                body: "ATS-style score, gaps, and rewritten bullets for fresher roles.",
                 href: "/resume",
               },
               {
                 title: "Mock Interviews",
-                body: "Practice HR, GenAI, or SDE-lite rounds and finish with a scorecard you can improve on.",
+                body: "Technical/Coding, Aptitude, HR, and GenAI rounds with scorecards.",
                 href: "/interview",
               },
               {
-                title: "GenAI Track",
-                body: "Short lessons with quizzes so you can explain GenAI confidently in interviews.",
+                title: "Learning Tracks",
+                body: "GenAI, Coding & Technical Foundations, and Aptitude & Reasoning.",
                 href: "/learn",
+              },
+              {
+                title: "Aptitude Drill",
+                body: "Timed-style MCQs with explanations for campus aptitude tests.",
+                href: "/practice",
               },
             ].map((f, i) => (
               <Link

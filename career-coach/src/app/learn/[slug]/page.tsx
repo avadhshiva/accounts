@@ -4,30 +4,31 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { AppShellClient } from "@/components/AppShellClient";
-import { getLesson, TRACK } from "@/lib/content";
+import { getLesson } from "@/lib/content";
 
 export default function LessonPage() {
   const params = useParams<{ slug: string }>();
-  const lesson = useMemo(() => getLesson(params.slug), [params.slug]);
+  const found = useMemo(() => getLesson(params.slug), [params.slug]);
   const [picked, setPicked] = useState<number | null>(null);
 
-  if (!lesson) {
+  if (!found) {
     return (
       <AppShellClient title="Lesson not found">
         <Link href="/learn" className="btn btn-ghost text-sm">
-          Back to track
+          Back to tracks
         </Link>
       </AppShellClient>
     );
   }
 
+  const { lesson, track } = found;
   const quiz = lesson.quiz[0];
   const correct = picked !== null && picked === quiz.answer;
 
   return (
     <AppShellClient title={lesson.title}>
       <p className="text-sm text-[var(--accent)]">
-        {TRACK.title} · {lesson.minutes} min
+        {track.title} · {lesson.minutes} min
       </p>
       <div className="panel mt-5 max-w-3xl space-y-4 rounded-[1.5rem] p-6">
         {lesson.body.map((p) => (
@@ -58,14 +59,17 @@ export default function LessonPage() {
           ))}
         </div>
         {picked !== null ? (
-          <p className="mt-3 text-sm font-medium">
-            {correct ? "Correct — nice." : "Not quite — review the lesson and retry."}
-          </p>
+          <div className="mt-3 text-sm">
+            <p className="font-medium">
+              {correct ? "Correct — nice." : "Not quite — review the lesson and retry."}
+            </p>
+            {quiz.explain ? <p className="mt-1 text-[var(--ink-soft)]">{quiz.explain}</p> : null}
+          </div>
         ) : null}
       </div>
 
       <Link href="/learn" className="btn btn-ghost mt-6 inline-flex text-sm">
-        ← All lessons
+        ← All tracks
       </Link>
     </AppShellClient>
   );

@@ -1,3 +1,5 @@
+export type InterviewMode = "hr" | "genai" | "technical" | "aptitude";
+
 export type Plan = "free" | "pro";
 
 export type User = {
@@ -38,7 +40,7 @@ export type InterviewMessage = {
 export type InterviewSession = {
   id: string;
   userId: string;
-  mode: "hr" | "genai" | "sde";
+  mode: InterviewMode;
   createdAt: string;
   status: "active" | "completed";
   messages: InterviewMessage[];

@@ -9,6 +9,7 @@ const links = [
   { href: "/resume", label: "Resume" },
   { href: "/interview", label: "Interview" },
   { href: "/learn", label: "Learn" },
+  { href: "/practice", label: "Aptitude" },
 ];
 
 export function AppShellClient({

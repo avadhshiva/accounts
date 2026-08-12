@@ -7,7 +7,7 @@ import { canUse } from "@/lib/limits";
 import { updateDb } from "@/lib/store";
 
 const schema = z.object({
-  mode: z.enum(["hr", "genai", "sde"]),
+  mode: z.enum(["hr", "genai", "technical", "aptitude"]),
 });
 
 export async function POST(req: Request) {
