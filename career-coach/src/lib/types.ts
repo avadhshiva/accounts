@@ -9,7 +9,7 @@ export type User = {
   email: string;
   passwordHash: string;
   plan: Plan;
-  /** trial = 30-min free window; paid/invite = full access */
+  /** trial = timed free window; paid/invite = full access */
   access: AccessStatus;
   trialStartedAt: string;
   paidAt?: string;
@@ -62,8 +62,21 @@ export type InterviewSession = {
   };
 };
 
+export type FeedbackEntry = {
+  id: string;
+  createdAt: string;
+  userId?: string;
+  name: string;
+  email: string;
+  section: string;
+  type: "issue" | "suggestion" | "remark";
+  message: string;
+  rating: number;
+};
+
 export type DbShape = {
   users: User[];
   resumes: ResumeAnalysis[];
   interviews: InterviewSession[];
+  feedback: FeedbackEntry[];
 };

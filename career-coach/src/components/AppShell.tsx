@@ -34,9 +34,9 @@ export async function AppShell({
     <div className="min-h-screen">
       {access.access === "trial" ? (
         <div className="bg-[var(--ink)] px-5 py-2 text-center text-sm text-[#f8f4ec]">
-          Trial time left: <strong>{access.remainingLabel}</strong> · unlock ₹{access.priceInr}{" "}
-          <Link href="/unlock" className="underline">
-            Unlock now
+          Pilot trial ends in <strong>{access.remainingLabel}</strong> · explore freely ·{" "}
+          <Link href="/feedback" className="underline">
+            Share feedback
           </Link>
         </div>
       ) : null}
@@ -58,8 +58,11 @@ export async function AppShell({
             <span className="rounded-full bg-[var(--sand-2)] px-3 py-1 font-medium capitalize">
               {user.access} · {user.usage.resumeAnalyses}/{LIMITS[user.plan].resumeAnalyses} resumes
             </span>
+            <Link href="/feedback" className="btn btn-ghost px-3 py-1.5 text-xs">
+              Feedback
+            </Link>
             <Link href="/unlock" className="btn btn-ghost px-3 py-1.5 text-xs">
-              Unlock
+              Trial
             </Link>
             <form action={logoutAction}>
               <button className="btn btn-ghost px-3 py-1.5 text-xs" type="submit">

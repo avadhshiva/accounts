@@ -28,12 +28,14 @@ export async function POST(req: Request) {
         throw new Error("EMAIL_TAKEN");
       }
       const now = new Date().toISOString();
+      const pilot = (process.env.PILOT_MODE || "true").toLowerCase() !== "false";
       const created = {
         id: randomUUID(),
         name: body.name.trim(),
         email,
         passwordHash: await hashPassword(body.password),
-        plan: "free" as const,
+        // Pilot: open limits so students can explore freely during trial
+        plan: pilot ? ("pro" as const) : ("free" as const),
         access: "trial" as const,
         trialStartedAt: now,
         sessionVersion: 1,

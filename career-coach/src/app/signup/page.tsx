@@ -36,7 +36,7 @@ export default function SignupPage() {
   }
 
   return (
-    <AuthShell title="Create your Pathly account" subtitle="30-minute free trial after signup — then unlock with invite or ₹500.">
+    <AuthShell title="Create your Pathly account" subtitle="48-hour pilot trial — explore freely, then share feedback. No payment in this round.">
       <form onSubmit={onSubmit} className="space-y-3">
         <input className="input" name="name" placeholder="Full name" required />
         <input className="input" name="email" type="email" placeholder="Email" required />

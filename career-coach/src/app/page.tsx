@@ -58,7 +58,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-[var(--ink-soft)]/70">
-              Signup includes a 30-min trial · then unlock with invite (pilot) or ₹500
+              Pilot: 48-hour free explore · feedback first · payments later
             </p>
           </div>
 

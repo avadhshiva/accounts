@@ -1,34 +1,42 @@
-# Deploy Pathly (AI Career Coach)
+# Deploy Pathly for a 48-hour student pilot
 
-## Recommended for this MVP
+## Goal
+Give 4–5 students a **public URL**, 48-hour trial, collect feedback. **No payment screen.**
 
-### Best now: **Railway** or **Render** (Node server)
-Why: the app currently stores users in a local `data/db.json` file. Vercel serverless has an ephemeral filesystem, so data can reset between requests unless you add Postgres/Turso first.
+## Where to deploy (pick one)
 
-1. Push branch `cursor/ai-career-coach-mvp-8c82`
-2. Create a new Railway/Render web service from the GitHub repo
-3. **Root directory:** `career-coach`
-4. Build: `npm install && npm run build`
-5. Start: `npm run start`
-6. Set env vars from `.env.example` (especially `AUTH_SECRET`, `INVITE_CODES`)
-7. Add a **persistent volume** mounted at `/app/data` (or project `data/`) so signups survive restarts
+### 1) Railway (recommended for this MVP)
+1. https://railway.app → New Project → Deploy from GitHub  
+2. Repo: `avadhshiva/accounts` · branch `cursor/ai-career-coach-mvp-8c82`  
+3. **Root directory:** `career-coach`  
+4. Build: `npm install && npm run build`  
+5. Start: `npm run start`  
+6. Variables (copy from `.env.example`):
+   - `AUTH_SECRET` = long random string  
+   - `PILOT_MODE=true`  
+   - `TRIAL_MINUTES=2880`  
+   - optional `NEXT_PUBLIC_FEEDBACK_FORM_URL` = your Google Form link  
+7. Add a **volume** at `/app/data` (or path matching `data/`) so signups/feedback persist  
+8. Generate domain → share `https://your-app.up.railway.app`
 
-### Also good later: **Vercel**
-Use when you migrate DB to Postgres/Neon/Turso + blob storage.
-- Framework preset: Next.js
-- Root: `career-coach`
-- Same env vars
-- Do **not** rely on `data/db.json` on Vercel without an external DB
+### 2) Render
+Same idea: Web Service, root `career-coach`, build/start as above, persistent disk for `data/`.
 
-## Trial cohort (4–10 students) without taking money yet
-1. Deploy on Railway/Render
-2. Share invite codes: `PATHLY-STUDENT` (or your own in `INVITE_CODES`)
-3. Students: Signup → use trial timer → `/unlock` → enter invite code
-4. Collect feedback on WhatsApp
+### Avoid for now: plain Vercel
+JSON file DB can reset on serverless. Use Vercel only after Postgres/Turso.
 
-## Security notes before public paid launch
-- Rotate `AUTH_SECRET`
-- Turn `ALLOW_TEST_PRO=false` and carefully control `ALLOW_MANUAL_UNLOCK`
-- Add Razorpay (live) for ₹500 unlock
-- Move off JSON file DB
-- CA review for GST / invoices
+## What to send students (WhatsApp template)
+```
+Hi! You're in the Pathly pilot (campus→corporate prep).
+
+URL: https://YOUR-URL
+1) Sign up
+2) You get 48 hours to explore (timer on top)
+3) Try: Resume, Interview, Learn roadmap, Aptitude
+4) Tap Feedback and rate / suggest
+
+No payment in this round — your feedback decides what we build next.
+```
+
+## After feedback
+Turn payment on later with `PILOT_MODE=false` and Razorpay — not before.

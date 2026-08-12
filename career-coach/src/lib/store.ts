@@ -9,13 +9,16 @@ const emptyDb = (): DbShape => ({
   users: [],
   resumes: [],
   interviews: [],
+  feedback: [],
 });
 
 export async function readDb(): Promise<DbShape> {
   await fs.mkdir(DATA_DIR, { recursive: true });
   try {
     const raw = await fs.readFile(DB_FILE, "utf8");
-    return JSON.parse(raw) as DbShape;
+    const parsed = JSON.parse(raw) as DbShape;
+    if (!parsed.feedback) parsed.feedback = [];
+    return parsed;
   } catch {
     const db = emptyDb();
     await fs.writeFile(DB_FILE, JSON.stringify(db, null, 2), "utf8");

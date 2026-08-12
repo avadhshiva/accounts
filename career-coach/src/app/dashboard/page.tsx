@@ -5,7 +5,6 @@ import { readDb } from "@/lib/store";
 import { TRACKS, totalLessonCount } from "@/lib/content";
 import { LIMITS } from "@/lib/limits";
 import { redirect } from "next/navigation";
-import { EnableProButton } from "@/components/EnableProButton";
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
@@ -38,18 +37,20 @@ export default async function DashboardPage() {
               Aptitude drill
             </Link>
           </div>
-          {user.plan === "free" || user.access === "trial" ? (
+          {user.access === "trial" ? (
             <div className="mt-5 rounded-2xl border border-dashed border-[var(--line)] bg-white/60 p-4 text-sm">
-              <p className="font-medium">Trial / pilot unlock</p>
+              <p className="font-medium">Pilot: 48-hour explore + feedback</p>
               <p className="mt-1 text-[var(--ink-soft)]">
-                Free use is timed (30 min). After that open Unlock — invite code for feedback students, or ₹500
-                payment when enabled.
+                No payment in this round. Try everything, then send feedback so we build what students
+                actually need.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Link href="/unlock" className="btn btn-accent text-sm">
-                  Open unlock
+                <Link href="/feedback" className="btn btn-accent text-sm">
+                  Share feedback
                 </Link>
-                <EnableProButton />
+                <Link href="/unlock" className="btn btn-ghost text-sm">
+                  See trial timer
+                </Link>
               </div>
             </div>
           ) : null}

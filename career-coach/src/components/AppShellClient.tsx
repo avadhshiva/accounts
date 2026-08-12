@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { formatRemaining } from "@/lib/access";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
@@ -18,6 +19,8 @@ type AccessInfo = {
   remainingLabel: string;
   remainingMs: number;
   priceInr: number;
+  pilotMode?: boolean;
+  trialHours?: number;
 };
 
 export function AppShellClient({
@@ -54,16 +57,13 @@ export function AppShellClient({
             setAccess((prev) => {
               if (!prev) return prev;
               const remainingMs = Math.max(0, prev.remainingMs - 1000);
-              const totalSec = Math.ceil(remainingMs / 1000);
-              const m = Math.floor(totalSec / 60);
-              const s = totalSec % 60;
               if (remainingMs <= 0) {
                 router.replace("/unlock");
               }
               return {
                 ...prev,
                 remainingMs,
-                remainingLabel: `${m}:${String(s).padStart(2, "0")}`,
+                remainingLabel: formatRemaining(remainingMs),
                 allowed: remainingMs > 0,
               };
             });
@@ -88,10 +88,9 @@ export function AppShellClient({
     <div className="min-h-screen">
       {access?.access === "trial" && access.allowed ? (
         <div className="bg-[var(--ink)] px-5 py-2 text-center text-sm text-[#f8f4ec]">
-          Trial time left: <strong>{access.remainingLabel}</strong> · after that unlock for ₹
-          {access.priceInr}{" "}
-          <Link href="/unlock" className="underline">
-            Unlock now
+          Pilot trial ends in <strong>{access.remainingLabel}</strong> · explore freely ·{" "}
+          <Link href="/feedback" className="underline">
+            Share feedback
           </Link>
         </div>
       ) : null}
@@ -117,8 +116,8 @@ export function AppShellClient({
             <span className="rounded-full bg-[var(--sand-2)] px-3 py-1 font-medium capitalize">
               {planLabel}
             </span>
-            <Link href="/unlock" className="btn btn-ghost px-3 py-1.5 text-xs">
-              Unlock
+            <Link href="/feedback" className="btn btn-ghost px-3 py-1.5 text-xs">
+              Feedback
             </Link>
             <button
               className="btn btn-ghost px-3 py-1.5 text-xs"
