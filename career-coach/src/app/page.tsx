@@ -103,8 +103,8 @@ export default async function HomePage() {
                 href: "/interview",
               },
               {
-                title: "Learning Tracks",
-                body: "GenAI, Coding & Technical Foundations, and Aptitude & Reasoning.",
+                title: "Learning Roadmaps",
+                body: "Visual paths for GenAI, Technical, and Aptitude — click nodes, see diagrams, track progress.",
                 href: "/learn",
               },
               {

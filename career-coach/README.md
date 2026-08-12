@@ -2,8 +2,9 @@
 
 Campus-to-corporate practice app for Indian engineering students:
 - Resume ATS-style scoring + rewrites
-- Mock interviews (HR / GenAI / SDE)
-- GenAI basics learning track
+- Mock interviews: **Technical/Coding**, **Aptitude**, HR, GenAI
+- Learning tracks: GenAI, Coding & Technical, Aptitude & Reasoning
+- Aptitude drill with explanations
 - Free limits + one-click Pro for test users
 
 ## Quick start (test users tomorrow)
