@@ -8,12 +8,13 @@ import {
   publicUser,
 } from "@/lib/auth";
 import { getAccessSnapshot } from "@/lib/access";
+import { passwordSchema } from "@/lib/password";
 import { updateDb } from "@/lib/store";
 
 const schema = z.object({
   name: z.string().min(2).max(80),
   email: z.string().email(),
-  password: z.string().min(6).max(100),
+  password: passwordSchema,
   college: z.string().max(120).optional(),
   targetRole: z.string().max(80).optional(),
 });
@@ -62,7 +63,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email already registered" }, { status: 409 });
     }
     if (e instanceof z.ZodError) {
-      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+      const msg = e.issues[0]?.message || "Invalid input";
+      return NextResponse.json({ error: msg }, { status: 400 });
     }
     return NextResponse.json({ error: "Signup failed" }, { status: 500 });
   }

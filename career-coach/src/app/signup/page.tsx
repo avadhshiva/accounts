@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PASSWORD_RULES_TEXT } from "@/lib/password";
+import { PasswordInput } from "@/components/PasswordInput";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -40,7 +42,12 @@ export default function SignupPage() {
       <form onSubmit={onSubmit} className="space-y-3">
         <input className="input" name="name" placeholder="Full name" required />
         <input className="input" name="email" type="email" placeholder="Email" required />
-        <input className="input" name="password" type="password" placeholder="Password (6+ chars)" required minLength={6} />
+        <PasswordInput
+          placeholder="Password"
+          autoComplete="new-password"
+          minLength={8}
+        />
+        <p className="text-xs text-[var(--ink-soft)]">{PASSWORD_RULES_TEXT}</p>
         <input className="input" name="college" placeholder="College (optional)" />
         <input className="input" name="targetRole" placeholder="Target role e.g. SDE Fresher" defaultValue="SDE Fresher" />
         {error ? <p className="text-sm text-[var(--accent-2)]">{error}</p> : null}

@@ -10,6 +10,7 @@ const emptyDb = (): DbShape => ({
   resumes: [],
   interviews: [],
   feedback: [],
+  passwordResetTokens: [],
 });
 
 export async function readDb(): Promise<DbShape> {
@@ -18,6 +19,7 @@ export async function readDb(): Promise<DbShape> {
     const raw = await fs.readFile(DB_FILE, "utf8");
     const parsed = JSON.parse(raw) as DbShape;
     if (!parsed.feedback) parsed.feedback = [];
+    if (!parsed.passwordResetTokens) parsed.passwordResetTokens = [];
     return parsed;
   } catch {
     const db = emptyDb();

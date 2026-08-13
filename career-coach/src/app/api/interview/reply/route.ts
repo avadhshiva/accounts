@@ -41,6 +41,7 @@ export async function POST(req: Request) {
           mode: session.mode,
           history,
           finalize: true,
+          questionSet: session.questionSet,
         });
         const overall = Number(scorecard.overall ?? 70);
         const communication = Number(scorecard.communication ?? 70);
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
         mode: session.mode,
         history,
         userMessage: body.message,
+        questionSet: session.questionSet,
       });
       session.messages.push({
         role: "coach",

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { interviewReply } from "@/lib/ai";
+import { pickQuestionSet } from "@/lib/interviewQuestions";
 import { canUse } from "@/lib/limits";
 import { assertFeatureAccess } from "@/lib/guard";
 import { updateDb } from "@/lib/store";
@@ -24,7 +25,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const first = await interviewReply({ mode: body.mode, history: [] });
+    const questionSet = pickQuestionSet(body.mode);
+    const first = await interviewReply({ mode: body.mode, history: [], questionSet });
     const session = await updateDb((db) => {
       const u = db.users.find((x) => x.id === user.id);
       if (u) u.usage.mockInterviews += 1;
@@ -34,6 +36,7 @@ export async function POST(req: Request) {
         mode: body.mode,
         createdAt: new Date().toISOString(),
         status: "active" as const,
+        questionSet,
         messages: [
           {
             role: "coach" as const,

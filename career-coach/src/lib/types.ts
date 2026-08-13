@@ -52,6 +52,8 @@ export type InterviewSession = {
   mode: InterviewMode;
   createdAt: string;
   status: "active" | "completed";
+  /** Random question set picked at session start */
+  questionSet?: string[];
   messages: InterviewMessage[];
   scorecard?: {
     overall: number;
@@ -75,9 +77,18 @@ export type FeedbackEntry = {
   rating: number;
 };
 
+export type PasswordResetToken = {
+  token: string;
+  userId: string;
+  email: string;
+  expiresAt: string;
+  createdAt: string;
+};
+
 export type DbShape = {
   users: User[];
   resumes: ResumeAnalysis[];
   interviews: InterviewSession[];
   feedback: FeedbackEntry[];
+  passwordResetTokens: PasswordResetToken[];
 };

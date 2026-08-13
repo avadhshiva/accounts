@@ -242,9 +242,13 @@ export async function interviewReply(params: {
   history: { role: "coach" | "user"; content: string }[];
   userMessage?: string;
   finalize?: boolean;
+  questionSet?: string[];
 }) {
   const modeLabel = MODE_LABEL[params.mode];
-  const starters = STARTERS[params.mode];
+  const starters =
+    params.questionSet && params.questionSet.length > 0
+      ? params.questionSet
+      : STARTERS[params.mode];
 
   if (params.finalize) {
     const mockScore = mockScoreFor(params.mode);

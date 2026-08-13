@@ -87,11 +87,7 @@ export function AppShellClient({
     <div className="min-h-screen">
       {access?.trialStarted && access.allowed ? (
         <div className="bg-[var(--ink)] px-5 py-2 text-center text-sm text-[#f8f4ec]">
-          Pilot trial ends in <strong className="tabular-nums">{access.remainingLabel}</strong> · explore
-          freely ·{" "}
-          <Link href="/feedback" className="underline">
-            Share feedback
-          </Link>
+          Pilot trial ends in <strong className="tabular-nums">{access.remainingLabel}</strong>
         </div>
       ) : null}
       <header className="border-b border-[var(--line)] bg-[rgba(250,248,243,0.85)] backdrop-blur">
