@@ -58,7 +58,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-[var(--ink-soft)]/70">
-              Pilot: 48-hour free explore · feedback first · payments later
+              Pilot: 7-day free explore · feedback first · payments later
             </p>
           </div>
 

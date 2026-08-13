@@ -18,9 +18,9 @@ export async function POST(req: Request) {
 
   try {
     const body = schema.parse(await req.json());
-    if (!canUse(user.plan, user.usage, "mockInterviews")) {
+    if (!canUse(user, "mockInterviews")) {
       return NextResponse.json(
-        { error: "Free monthly mock limit reached.", code: "LIMIT" },
+        { error: "Trial mock interview limit reached (2 sessions). Share feedback or contact us to extend.", code: "LIMIT" },
         { status: 402 },
       );
     }

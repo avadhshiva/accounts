@@ -21,7 +21,7 @@ services:
       - key: PILOT_MODE
         value: "true"
       - key: TRIAL_MINUTES
-        value: "2880"
+        value: "10080"
       - key: ALLOW_MANUAL_UNLOCK
         value: "false"
       - key: ALLOW_TEST_PRO

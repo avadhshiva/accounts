@@ -3,9 +3,9 @@ import type { AccessStatus, User } from "./types";
 /** Pilot = feedback cohort, no payment UI. Default on. */
 export const PILOT_MODE = (process.env.PILOT_MODE || "true").toLowerCase() !== "false";
 
-/** Default 48 hours for pilot; override with TRIAL_MINUTES */
+/** Default 7 days for pilot; override with TRIAL_MINUTES */
 export const TRIAL_MINUTES = Number(
-  process.env.TRIAL_MINUTES || (PILOT_MODE ? 60 * 48 : 30),
+  process.env.TRIAL_MINUTES || (PILOT_MODE ? 60 * 24 * 7 : 30),
 );
 export const UNLOCK_PRICE_INR = Number(process.env.UNLOCK_PRICE_INR || 500);
 

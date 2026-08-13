@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, publicUser } from "@/lib/auth";
-import { getAccessSnapshot, PILOT_MODE } from "@/lib/access";
+import { getAccessSnapshot, PILOT_MODE, TRIAL_MINUTES } from "@/lib/access";
 import { updateDb } from "@/lib/store";
 
 export async function POST() {
@@ -28,9 +28,12 @@ export async function POST() {
 
   if (!updated) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
+  const trialDays = Math.max(1, Math.round(TRIAL_MINUTES / 60 / 24));
+  const trialLabel = trialDays >= 2 ? `${trialDays} days` : `${Math.round(TRIAL_MINUTES / 60)} hours`;
+
   return NextResponse.json({
     user: publicUser(updated),
     access: getAccessSnapshot(updated),
-    message: "Trial started — explore freely for 48 hours.",
+    message: `Trial started — explore freely for ${trialLabel}.`,
   });
 }

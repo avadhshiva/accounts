@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { formatRemaining } from "@/lib/access";
+import { formatNavUsagePill } from "@/lib/display";
+import type { User } from "@/lib/types";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
@@ -32,7 +34,8 @@ export function AppShellClient({
   const pathname = usePathname();
   const router = useRouter();
   const [ready, setReady] = useState(false);
-  const [planLabel, setPlanLabel] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+  const [usagePill, setUsagePill] = useState("");
   const [access, setAccess] = useState<AccessInfo | null>(null);
 
   useEffect(() => {
@@ -44,8 +47,9 @@ export function AppShellClient({
           return;
         }
         const data = await r.json();
-        setPlanLabel(data.user.access || data.user.plan);
+        setUser(data.user);
         setAccess(data.access);
+        setUsagePill(formatNavUsagePill(data.user, data.access?.remainingLabel));
         setReady(true);
         if (!data.access?.allowed) {
           router.replace("/unlock");
@@ -59,10 +63,15 @@ export function AppShellClient({
               if (remainingMs <= 0) {
                 router.replace("/unlock");
               }
+              const remainingLabel = formatRemaining(remainingMs);
+              setUser((u) => {
+                if (u) setUsagePill(formatNavUsagePill(u, remainingLabel));
+                return u;
+              });
               return {
                 ...prev,
                 remainingMs,
-                remainingLabel: formatRemaining(remainingMs),
+                remainingLabel,
                 allowed: remainingMs > 0,
               };
             });
@@ -108,15 +117,16 @@ export function AppShellClient({
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="rounded-full bg-[var(--sand-2)] px-3 py-1 font-medium capitalize">
-              {planLabel}
-            </span>
+          <div className="flex items-center gap-2 text-sm md:gap-3">
+            <Link
+              href="/unlock"
+              className="max-w-[11rem] truncate rounded-full bg-[var(--sand-2)] px-3 py-1 text-xs font-medium tabular-nums hover:opacity-90 md:max-w-none md:text-sm"
+              title={usagePill}
+            >
+              {usagePill}
+            </Link>
             <Link href="/feedback" className="btn btn-ghost px-3 py-1.5 text-xs">
               Feedback
-            </Link>
-            <Link href="/unlock" className="btn btn-ghost px-3 py-1.5 text-xs">
-              Trial
             </Link>
             <button
               className="btn btn-ghost px-3 py-1.5 text-xs"

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser, destroySession } from "@/lib/auth";
 import { getAccessSnapshot } from "@/lib/access";
-import { LIMITS } from "@/lib/limits";
+import { formatNavUsagePill } from "@/lib/display";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
@@ -30,6 +30,8 @@ export async function AppShell({
   const access = getAccessSnapshot(user);
   if (!access.allowed) redirect("/unlock");
 
+  const usagePill = formatNavUsagePill(user, access.remainingLabel);
+
   return (
     <div className="min-h-screen">
       {access.access === "trial" && access.trialStarted ? (
@@ -51,15 +53,16 @@ export async function AppShell({
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="rounded-full bg-[var(--sand-2)] px-3 py-1 font-medium capitalize">
-              {user.access} · {user.usage.resumeAnalyses}/{LIMITS[user.plan].resumeAnalyses} resumes
-            </span>
+          <div className="flex items-center gap-2 text-sm md:gap-3">
+            <Link
+              href="/unlock"
+              className="max-w-[11rem] truncate rounded-full bg-[var(--sand-2)] px-3 py-1 text-xs font-medium tabular-nums hover:opacity-90 md:max-w-none md:text-sm"
+              title={usagePill}
+            >
+              {usagePill}
+            </Link>
             <Link href="/feedback" className="btn btn-ghost px-3 py-1.5 text-xs">
               Feedback
-            </Link>
-            <Link href="/unlock" className="btn btn-ghost px-3 py-1.5 text-xs">
-              Trial
             </Link>
             <form action={logoutAction}>
               <button className="btn btn-ghost px-3 py-1.5 text-xs" type="submit">

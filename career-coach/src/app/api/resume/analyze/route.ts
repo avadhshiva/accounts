@@ -18,10 +18,10 @@ export async function POST(req: Request) {
 
   try {
     const body = schema.parse(await req.json());
-    if (!canUse(user.plan, user.usage, "resumeAnalyses")) {
+    if (!canUse(user, "resumeAnalyses")) {
       return NextResponse.json(
         {
-          error: "Free monthly resume limit reached. Unlock/Pro increases limits.",
+          error: "Trial resume limit reached (3 scores). Share feedback or contact us to extend.",
           code: "LIMIT",
         },
         { status: 402 },

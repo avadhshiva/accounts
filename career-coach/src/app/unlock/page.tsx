@@ -72,13 +72,14 @@ export default function UnlockPage() {
   }
 
   const pilot = access?.pilotMode !== false;
-  const hours = access?.trialHours ?? 48;
+  const hours = access?.trialHours ?? 168;
+  const trialDays = Math.max(1, Math.round(hours / 24));
+  const trialLabel = trialDays >= 2 ? `${trialDays}-day` : `${hours}-hour`;
   const notStarted = access?.reason === "trial_not_started";
   const expired = access?.reason === "trial_expired";
   const active = access?.trialStarted && access.allowed;
 
-  const intro =
-    "You have 48 hours to explore freely. No payment for this pilot. Try resume, interviews, roadmaps, and aptitude — then tell us what helped and what didn’t.";
+  const intro = `You have ${trialLabel} to explore freely. No payment for this pilot. Start with your resume score, then one mock interview — learn & aptitude when you have time. Tell us what helped and what didn’t.`;
 
   return (
     <div className="mx-auto min-h-screen max-w-xl px-5 py-10">
@@ -120,7 +121,7 @@ export default function UnlockPage() {
                     Before you explore
                   </p>
                   <p className="mt-3 text-sm text-[var(--ink-soft)]">
-                    Click below to start your <strong>{hours}-hour</strong> trial clock. Resume, Interview,
+                    Click below to start your <strong>{trialLabel}</strong> trial clock. Resume, Interview,
                     Learn, and Aptitude unlock after you start — not before.
                   </p>
                   <button
