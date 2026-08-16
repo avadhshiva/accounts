@@ -8,8 +8,8 @@ import {
   publicUser,
 } from "@/lib/auth";
 import { getAccessSnapshot } from "@/lib/access";
+import { userRepo } from "@/lib/db";
 import { passwordSchema } from "@/lib/password";
-import { updateDb } from "@/lib/store";
 
 const schema = z.object({
   name: z.string().min(2).max(80),
@@ -24,33 +24,30 @@ export async function POST(req: Request) {
     const body = schema.parse(await req.json());
     const email = body.email.toLowerCase().trim();
 
-    const user = await updateDb(async (db) => {
-      if (db.users.some((u) => u.email === email)) {
-        throw new Error("EMAIL_TAKEN");
-      }
-      const now = new Date().toISOString();
-      const pilot = (process.env.PILOT_MODE || "true").toLowerCase() !== "false";
-      const created = {
-        id: randomUUID(),
-        name: body.name.trim(),
-        email,
-        passwordHash: await hashPassword(body.password),
-        // Pilot: open limits so students can explore freely during trial
-        plan: pilot ? ("pro" as const) : ("free" as const),
-        access: "trial" as const,
-        trialStartedAt: "",
-        sessionVersion: 1,
-        college: body.college?.trim() || "",
-        targetRole: body.targetRole?.trim() || "SDE Fresher",
-        createdAt: now,
-        usage: {
-          resumeAnalyses: 0,
-          mockInterviews: 0,
-          monthKey: monthKey(),
-        },
-      };
-      db.users.push(created);
-      return created;
+    if (await userRepo.emailExists(email)) {
+      return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+    }
+
+    const now = new Date().toISOString();
+    const pilot = (process.env.PILOT_MODE || "true").toLowerCase() !== "false";
+    const user = await userRepo.create({
+      id: randomUUID(),
+      name: body.name.trim(),
+      email,
+      passwordHash: await hashPassword(body.password),
+      plan: pilot ? "pro" : "free",
+      access: "trial",
+      trialStartedAt: "",
+      sessionVersion: 1,
+      college: body.college?.trim() || "",
+      targetRole: body.targetRole?.trim() || "SDE Fresher",
+      createdAt: now,
+      updatedAt: now,
+      usage: {
+        resumeAnalyses: 0,
+        mockInterviews: 0,
+        monthKey: monthKey(),
+      },
     });
 
     await createSession(user.id, user.sessionVersion);
@@ -59,9 +56,6 @@ export async function POST(req: Request) {
       access: getAccessSnapshot(user),
     });
   } catch (e) {
-    if (e instanceof Error && e.message === "EMAIL_TAKEN") {
-      return NextResponse.json({ error: "Email already registered" }, { status: 409 });
-    }
     if (e instanceof z.ZodError) {
       const msg = e.issues[0]?.message || "Invalid input";
       return NextResponse.json({ error: msg }, { status: 400 });

@@ -6,7 +6,7 @@ import {
   getInviteCodes,
   UNLOCK_PRICE_INR,
 } from "@/lib/access";
-import { updateDb } from "@/lib/store";
+import { userRepo } from "@/lib/db";
 
 const schema = z.object({
   method: z.enum(["invite", "manual_upi"]),
@@ -26,14 +26,11 @@ export async function POST(req: Request) {
       if (!getInviteCodes().includes(code)) {
         return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
       }
-      const updated = await updateDb((db) => {
-        const u = db.users.find((x) => x.id === user.id);
-        if (!u) return null;
-        u.access = "invite";
-        u.plan = "pro";
-        u.inviteCode = code;
-        u.paidAt = new Date().toISOString();
-        return u;
+      const updated = await userRepo.unlockAccess(user.id, {
+        access: "invite",
+        plan: "pro",
+        inviteCode: code,
+        paidAt: new Date().toISOString(),
       });
       if (!updated) return NextResponse.json({ error: "User not found" }, { status: 404 });
       return NextResponse.json({
@@ -43,7 +40,6 @@ export async function POST(req: Request) {
       });
     }
 
-    // Manual UPI path for early pilot (before Razorpay)
     if (process.env.ALLOW_MANUAL_UNLOCK !== "true") {
       return NextResponse.json(
         {
@@ -59,14 +55,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Enter UPI/payment reference" }, { status: 400 });
     }
 
-    const updated = await updateDb((db) => {
-      const u = db.users.find((x) => x.id === user.id);
-      if (!u) return null;
-      u.access = "paid";
-      u.plan = "pro";
-      u.paidAt = new Date().toISOString();
-      u.inviteCode = `UPI:${ref}`;
-      return u;
+    const updated = await userRepo.unlockAccess(user.id, {
+      access: "paid",
+      plan: "pro",
+      inviteCode: `UPI:${ref}`,
+      paidAt: new Date().toISOString(),
     });
     if (!updated) return NextResponse.json({ error: "User not found" }, { status: 404 });
     return NextResponse.json({

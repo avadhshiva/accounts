@@ -20,6 +20,7 @@ export type User = {
   college?: string;
   targetRole?: string;
   createdAt: string;
+  updatedAt?: string;
   usage: {
     resumeAnalyses: number;
     mockInterviews: number;
@@ -83,6 +84,24 @@ export type PasswordResetToken = {
   email: string;
   expiresAt: string;
   createdAt: string;
+};
+
+/** Foundation tables for future phases — not wired to UI in Phase 1 */
+export type UserProgress = {
+  userId: string;
+  learnCompleted: string[];
+  updatedAt: string;
+};
+
+export type AptitudeAttempt = {
+  id: string;
+  userId: string;
+  createdAt: string;
+  score: number;
+  total: number;
+  accuracy: number;
+  durationSec?: number;
+  topicBreakdown: { topic: string; correct: number; total: number }[];
 };
 
 export type DbShape = {

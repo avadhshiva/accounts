@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, publicUser } from "@/lib/auth";
 import { getAccessSnapshot, PILOT_MODE, TRIAL_MINUTES } from "@/lib/access";
-import { updateDb } from "@/lib/store";
+import { userRepo } from "@/lib/db";
 
 export async function POST() {
   const user = await getSessionUser();
@@ -19,13 +19,7 @@ export async function POST() {
     });
   }
 
-  const updated = await updateDb((db) => {
-    const u = db.users.find((x) => x.id === user.id);
-    if (!u) return null;
-    u.trialStartedAt = new Date().toISOString();
-    return u;
-  });
-
+  const updated = await userRepo.startTrial(user.id);
   if (!updated) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   const trialDays = Math.max(1, Math.round(TRIAL_MINUTES / 60 / 24));

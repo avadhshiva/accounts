@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { getSessionUser } from "@/lib/auth";
-import { readDb } from "@/lib/store";
+import { interviewRepo, resumeRepo } from "@/lib/db";
 import { TRACKS, totalLessonCount } from "@/lib/content";
 import { getAccessSnapshot } from "@/lib/access";
 import { getPlanDisplayLabel, getUsageLimits } from "@/lib/display";
@@ -55,9 +55,8 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
   const access = getAccessSnapshot(user);
   if (!access.allowed) redirect("/unlock");
-  const db = await readDb();
-  const resumes = db.resumes.filter((r) => r.userId === user.id).slice(0, 3);
-  const interviews = db.interviews.filter((i) => i.userId === user.id).slice(0, 3);
+  const resumes = await resumeRepo.listByUserId(user.id, 3);
+  const interviews = await interviewRepo.listByUserId(user.id, 3);
 
   const limits = getUsageLimits(user);
   const planLabel = getPlanDisplayLabel(user);

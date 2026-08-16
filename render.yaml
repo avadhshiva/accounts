@@ -1,8 +1,8 @@
 # Render blueprint — deploy from repo root (monorepo)
-# Dashboard: New → Blueprint → branch cursor/ai-career-coach-mvp-8c82
+# Dashboard: New → Blueprint → branch cursor/pathly-product-revamp-8c82
 #
-# Free tier: no persistent disk — signups live in data/db.json but may reset on
-# redeploy/restart. For pilot: use Google Form feedback (NEXT_PUBLIC_FEEDBACK_FORM_URL).
+# REQUIRED: Set DATABASE_URL in Render dashboard (Supabase PostgreSQL connection string).
+# Run `npm run db:migrate` once after first deploy (see career-coach/docs/PERSISTENCE.md).
 
 services:
   - type: web
@@ -28,3 +28,4 @@ services:
         value: "false"
       - key: NEXT_PUBLIC_APP_NAME
         value: Pathly
+      # DATABASE_URL — set manually in Render dashboard (Supabase URI). Do not commit.

@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { analyzeResume } from "@/lib/ai";
+import { resumeRepo, userRepo } from "@/lib/db";
 import { canUse } from "@/lib/limits";
 import { assertFeatureAccess } from "@/lib/guard";
-import { updateDb } from "@/lib/store";
 
 const schema = z.object({
   resumeText: z.string().min(80).max(20000),
@@ -29,23 +29,19 @@ export async function POST(req: Request) {
     }
 
     const result = await analyzeResume(body);
-    const saved = await updateDb((db) => {
-      const u = db.users.find((x) => x.id === user.id);
-      if (u) u.usage.resumeAnalyses += 1;
-      const row = {
-        id: randomUUID(),
-        userId: user.id,
-        createdAt: new Date().toISOString(),
-        role: body.role,
-        score: result.score,
-        summary: result.summary,
-        strengths: result.strengths,
-        gaps: result.gaps,
-        rewrites: result.rewrites,
-        keywordsToAdd: result.keywordsToAdd,
-      };
-      db.resumes.unshift(row);
-      return row;
+    await userRepo.incrementUsage(user.id, "resumeAnalyses");
+
+    const saved = await resumeRepo.create({
+      id: randomUUID(),
+      userId: user.id,
+      createdAt: new Date().toISOString(),
+      role: body.role,
+      score: result.score,
+      summary: result.summary,
+      strengths: result.strengths,
+      gaps: result.gaps,
+      rewrites: result.rewrites,
+      keywordsToAdd: result.keywordsToAdd,
     });
 
     return NextResponse.json({ analysis: saved, provider: result.provider });

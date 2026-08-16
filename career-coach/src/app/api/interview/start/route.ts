@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { interviewReply } from "@/lib/ai";
+import { interviewRepo, userRepo } from "@/lib/db";
 import { pickQuestionSet } from "@/lib/interviewQuestions";
 import { canUse } from "@/lib/limits";
 import { assertFeatureAccess } from "@/lib/guard";
-import { updateDb } from "@/lib/store";
 
 const schema = z.object({
   mode: z.enum(["hr", "genai", "technical", "aptitude"]),
@@ -27,26 +27,22 @@ export async function POST(req: Request) {
 
     const questionSet = pickQuestionSet(body.mode);
     const first = await interviewReply({ mode: body.mode, history: [], questionSet });
-    const session = await updateDb((db) => {
-      const u = db.users.find((x) => x.id === user.id);
-      if (u) u.usage.mockInterviews += 1;
-      const row = {
-        id: randomUUID(),
-        userId: user.id,
-        mode: body.mode,
-        createdAt: new Date().toISOString(),
-        status: "active" as const,
-        questionSet,
-        messages: [
-          {
-            role: "coach" as const,
-            content: first.message || "Tell me about yourself.",
-            at: new Date().toISOString(),
-          },
-        ],
-      };
-      db.interviews.unshift(row);
-      return row;
+    await userRepo.incrementUsage(user.id, "mockInterviews");
+
+    const session = await interviewRepo.create({
+      id: randomUUID(),
+      userId: user.id,
+      mode: body.mode,
+      createdAt: new Date().toISOString(),
+      status: "active",
+      questionSet,
+      messages: [
+        {
+          role: "coach",
+          content: first.message || "Tell me about yourself.",
+          at: new Date().toISOString(),
+        },
+      ],
     });
 
     return NextResponse.json({ session });

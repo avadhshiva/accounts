@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createSession, publicUser, verifyPassword } from "@/lib/auth";
-import { ensureUserDefaults, getAccessSnapshot } from "@/lib/access";
-import { updateDb } from "@/lib/store";
+import { getAccessSnapshot } from "@/lib/access";
+import { userRepo } from "@/lib/db";
 
 const schema = z.object({
   email: z.string().email(),
@@ -14,16 +14,13 @@ export async function POST(req: Request) {
     const body = schema.parse(await req.json());
     const email = body.email.toLowerCase().trim();
 
-    const user = await updateDb(async (db) => {
-      const found = db.users.find((u) => u.email === email);
-      if (!found) throw new Error("INVALID");
-      const ok = await verifyPassword(body.password, found.passwordHash);
-      if (!ok) throw new Error("INVALID");
-      ensureUserDefaults(found);
-      // Single active login: bump session version so older devices are logged out
-      found.sessionVersion = (found.sessionVersion || 1) + 1;
-      return found;
-    });
+    const found = await userRepo.findByEmail(email);
+    if (!found) throw new Error("INVALID");
+    const ok = await verifyPassword(body.password, found.passwordHash);
+    if (!ok) throw new Error("INVALID");
+
+    const user = await userRepo.bumpSessionVersion(found.id);
+    if (!user) throw new Error("INVALID");
 
     await createSession(user.id, user.sessionVersion);
     return NextResponse.json({

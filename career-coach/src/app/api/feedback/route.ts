@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { getSessionUser } from "@/lib/auth";
-import { updateDb } from "@/lib/store";
+import { feedbackRepo } from "@/lib/db";
 
 const schema = z.object({
   name: z.string().min(2).max(80),
@@ -18,21 +18,16 @@ export async function POST(req: Request) {
     const body = schema.parse(await req.json());
     const user = await getSessionUser();
 
-    const entry = await updateDb((db) => {
-      if (!db.feedback) db.feedback = [];
-      const row = {
-        id: randomUUID(),
-        createdAt: new Date().toISOString(),
-        userId: user?.id,
-        name: body.name.trim(),
-        email: body.email.toLowerCase().trim(),
-        section: body.section,
-        type: body.type,
-        message: body.message.trim(),
-        rating: body.rating,
-      };
-      db.feedback.unshift(row);
-      return row;
+    const entry = await feedbackRepo.create({
+      id: randomUUID(),
+      createdAt: new Date().toISOString(),
+      userId: user?.id,
+      name: body.name.trim(),
+      email: body.email.toLowerCase().trim(),
+      section: body.section,
+      type: body.type,
+      message: body.message.trim(),
+      rating: body.rating,
     });
 
     return NextResponse.json({ ok: true, id: entry.id });

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { z } from "zod";
+import { userRepo, passwordResetRepo } from "@/lib/db";
 import { appBaseUrl, sendEmail } from "@/lib/email";
-import { updateDb } from "@/lib/store";
 
 const schema = z.object({
   email: z.string().email(),
@@ -15,29 +15,21 @@ export async function POST(req: Request) {
     const body = schema.parse(await req.json());
     const email = body.email.toLowerCase().trim();
 
-    const tokenRow = await updateDb(async (db) => {
-      const user = db.users.find((u) => u.email === email);
-      if (!user) return null;
+    const user = await userRepo.findByEmail(email);
+    let tokenRow = null;
 
-      const token = randomBytes(32).toString("hex");
+    if (user) {
       const now = new Date();
+      const token = randomBytes(32).toString("hex");
       const expiresAt = new Date(now.getTime() + TOKEN_TTL_MS).toISOString();
-
-      if (!db.passwordResetTokens) db.passwordResetTokens = [];
-      db.passwordResetTokens = db.passwordResetTokens.filter(
-        (t) => t.userId !== user.id || new Date(t.expiresAt) > now,
-      );
-
-      const row = {
+      tokenRow = await passwordResetRepo.createToken({
         token,
         userId: user.id,
         email: user.email,
         expiresAt,
         createdAt: now.toISOString(),
-      };
-      db.passwordResetTokens.push(row);
-      return row;
-    });
+      });
+    }
 
     if (tokenRow) {
       const resetUrl = `${appBaseUrl()}/reset-password?token=${tokenRow.token}`;
@@ -57,7 +49,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Always return success to avoid email enumeration
     return NextResponse.json({
       ok: true,
       message: "If that email is registered, a reset link has been sent.",

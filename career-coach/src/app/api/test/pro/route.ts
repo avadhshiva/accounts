@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, publicUser } from "@/lib/auth";
 import { getAccessSnapshot } from "@/lib/access";
-import { updateDb } from "@/lib/store";
+import { userRepo } from "@/lib/db";
 
 /** Test-only helper: promote current user to paid/pro for pilot. */
 export async function POST() {
@@ -11,14 +11,10 @@ export async function POST() {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Login required" }, { status: 401 });
 
-  const updated = await updateDb((db) => {
-    const u = db.users.find((x) => x.id === user.id);
-    if (u) {
-      u.plan = "pro";
-      u.access = "paid";
-      u.paidAt = new Date().toISOString();
-    }
-    return u;
+  const updated = await userRepo.unlockAccess(user.id, {
+    access: "paid",
+    plan: "pro",
+    paidAt: new Date().toISOString(),
   });
 
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
