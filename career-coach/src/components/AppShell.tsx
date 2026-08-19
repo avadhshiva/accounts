@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSessionUser, destroySession } from "@/lib/auth";
+import { APP_NAME } from "@/lib/brand";
 import { getAccessSnapshot } from "@/lib/access";
 import { formatNavUsagePill } from "@/lib/display";
 
@@ -43,7 +44,7 @@ export async function AppShell({
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
           <div className="flex items-center gap-6">
             <Link href="/" className="display text-xl font-semibold">
-              Pathly
+              {APP_NAME}
             </Link>
             <nav className="hidden gap-4 text-sm font-medium md:flex">
               {links.map((l) => (

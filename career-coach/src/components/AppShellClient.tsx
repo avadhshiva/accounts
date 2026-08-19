@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { formatRemaining } from "@/lib/access";
+import { APP_NAME } from "@/lib/brand";
 import { formatNavUsagePill } from "@/lib/display";
 import type { User } from "@/lib/types";
 
@@ -103,7 +104,7 @@ export function AppShellClient({
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
           <div className="flex items-center gap-6">
             <Link href="/" className="display text-xl font-semibold">
-              Pathly
+              {APP_NAME}
             </Link>
             <nav className="hidden gap-4 text-sm font-medium md:flex">
               {links.map((l) => (

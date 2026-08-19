@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { APP_NAME } from "@/lib/brand";
 
 function LegalLayout({
   title,
@@ -10,7 +11,7 @@ function LegalLayout({
   return (
     <div className="mx-auto min-h-screen max-w-3xl px-5 py-10">
       <Link href="/" className="display text-2xl font-semibold">
-        Pathly
+        {APP_NAME}
       </Link>
       <h1 className="display mt-8 text-4xl font-semibold">{title}</h1>
       <div className="prose mt-6 space-y-4 text-[var(--ink-soft)]">{children}</div>
@@ -25,7 +26,7 @@ export default function TermsPage() {
   return (
     <LegalLayout title="Terms of Service">
       <p>
-        Pathly provides AI-assisted career practice tools (resume feedback, mock interviews, and learning
+        {APP_NAME} provides AI-assisted career practice tools (resume feedback, mock interviews, and learning
         content). It is a practice product, not a recruiter, employer, or placement agency.
       </p>
       <p>

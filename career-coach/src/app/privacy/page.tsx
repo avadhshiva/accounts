@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { APP_NAME } from "@/lib/brand";
 
 export default function PrivacyPage() {
   return (
     <div className="mx-auto min-h-screen max-w-3xl px-5 py-10">
       <Link href="/" className="display text-2xl font-semibold">
-        Pathly
+        {APP_NAME}
       </Link>
       <h1 className="display mt-8 text-4xl font-semibold">Privacy Policy</h1>
       <div className="mt-6 space-y-4 text-[var(--ink-soft)]">
@@ -14,7 +15,7 @@ export default function PrivacyPage() {
         </p>
         <p>
           If AI API keys are configured, resume/interview text may be sent to Gemini or OpenAI to generate
-          feedback. Without keys, Pathly uses on-server mock coaching logic.
+          feedback. Without keys, {APP_NAME} uses on-server mock coaching logic.
         </p>
         <p>
           Payment providers (when enabled) receive billing data. We use cookies/sessions to keep you logged in

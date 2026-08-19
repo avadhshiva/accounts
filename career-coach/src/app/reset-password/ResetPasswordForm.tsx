@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PASSWORD_RULES_TEXT } from "@/lib/password";
+import { APP_NAME } from "@/lib/brand";
 import { PasswordInput } from "@/components/PasswordInput";
 
 export default function ResetPasswordForm() {
@@ -61,7 +62,7 @@ export default function ResetPasswordForm() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 py-10">
       <Link href="/" className="display mb-8 text-2xl font-semibold">
-        Pathly
+        {APP_NAME}
       </Link>
       <div className="panel rounded-[1.75rem] p-6">
         <h1 className="display text-3xl font-semibold">Set new password</h1>

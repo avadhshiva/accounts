@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope } from "next/font/google";
+import { APP_METADATA_DESCRIPTION, APP_METADATA_TITLE } from "@/lib/brand";
 import "./globals.css";
 
 const display = Fraunces({
@@ -15,9 +16,8 @@ const body = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Pathly — AI Career Coach",
-  description:
-    "Campus to corporate AI coach: resume scoring, mock interviews, and GenAI basics for Indian engineering students.",
+  title: APP_METADATA_TITLE,
+  description: APP_METADATA_DESCRIPTION,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

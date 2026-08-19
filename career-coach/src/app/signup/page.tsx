@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PASSWORD_RULES_TEXT } from "@/lib/password";
+import { APP_NAME } from "@/lib/brand";
 import { PasswordInput } from "@/components/PasswordInput";
 
 export default function SignupPage() {
@@ -38,7 +39,7 @@ export default function SignupPage() {
   }
 
   return (
-    <AuthShell title="Create your Pathly account" subtitle="7-day pilot trial — start with resume + one mock interview, then explore. No payment in this round.">
+    <AuthShell title={`Create your ${APP_NAME} account`} subtitle="7-day pilot trial — start with resume + one mock interview, then explore. No payment in this round.">
       <form onSubmit={onSubmit} className="space-y-3">
         <input className="input" name="name" placeholder="Full name" required />
         <input className="input" name="email" type="email" placeholder="Email" required />
@@ -74,7 +75,7 @@ function AuthShell({
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 py-10">
       <Link href="/" className="display mb-8 text-2xl font-semibold">
-        Pathly
+        {APP_NAME}
       </Link>
       <div className="panel rounded-[1.75rem] p-6 shadow-[0_20px_60px_rgba(15,28,46,0.06)]">
         <h1 className="display text-3xl font-semibold">{title}</h1>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
+import { APP_NAME } from "@/lib/brand";
 
 export default async function HomePage() {
   const user = await getSessionUser();
@@ -8,7 +9,7 @@ export default async function HomePage() {
     <div className="min-h-screen">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5">
         <Link href="/" className="display text-2xl font-semibold tracking-tight">
-          Pathly
+          {APP_NAME}
         </Link>
         <nav className="flex items-center gap-3 text-sm font-medium">
           <Link href="/#features" className="hidden sm:inline opacity-80 hover:opacity-100">
@@ -41,7 +42,7 @@ export default async function HomePage() {
               Campus → Corporate
             </p>
             <h1 className="display max-w-xl text-5xl leading-[1.05] font-semibold text-[var(--ink)] md:text-6xl">
-              Pathly
+              {APP_NAME}
             </h1>
             <p className="mt-3 max-w-xl text-xl text-[var(--ink-soft)] md:text-2xl">
               AI career coach for resumes, technical interviews, aptitude, and GenAI job readiness.
@@ -129,7 +130,7 @@ export default async function HomePage() {
 
       <footer className="border-t border-[var(--line)] px-5 py-8 text-sm text-[var(--ink-soft)]">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Pathly · Practice tool, not a placement guarantee.</p>
+          <p>© {new Date().getFullYear()} {APP_NAME} · Practice tool, not a placement guarantee.</p>
           <div className="flex gap-4">
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>

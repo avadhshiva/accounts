@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { APP_NAME } from "@/lib/brand";
 
 const SECTIONS = [
   "Home / landing",
@@ -57,7 +58,7 @@ export default function FeedbackPage() {
   return (
     <div className="mx-auto min-h-screen max-w-xl px-5 py-10">
       <Link href="/" className="display text-2xl font-semibold">
-        Pathly
+        {APP_NAME}
       </Link>
       <h1 className="display mt-8 text-4xl font-semibold">Student feedback</h1>
       <p className="mt-3 text-[var(--ink-soft)]">

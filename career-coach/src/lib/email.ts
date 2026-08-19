@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { APP_NAME } from "./brand";
 
 type SendEmailInput = {
   to: string;
@@ -11,16 +12,12 @@ export function appBaseUrl() {
   return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
 }
 
-function appName() {
-  return process.env.NEXT_PUBLIC_APP_NAME || "Pathly";
-}
-
 function defaultFrom() {
   const brevoSender = process.env.BREVO_SENDER_EMAIL?.trim();
-  if (brevoSender) return `${appName()} <${brevoSender}>`;
+  if (brevoSender) return `${APP_NAME} <${brevoSender}>`;
   const gmailUser = process.env.GMAIL_USER?.trim();
-  if (gmailUser) return `${appName()} <${gmailUser}>`;
-  return process.env.EMAIL_FROM || `${appName()} <onboarding@resend.dev>`;
+  if (gmailUser) return `${APP_NAME} <${gmailUser}>`;
+  return process.env.EMAIL_FROM || `${APP_NAME} <onboarding@resend.dev>`;
 }
 
 /** Brevo (Sendinblue) — HTTP API, works on Render free tier. Verify sender email in Brevo dashboard (no domain purchase). */
@@ -37,7 +34,7 @@ async function sendViaBrevo(input: SendEmailInput): Promise<{ ok: boolean; error
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      sender: { name: appName(), email: senderEmail },
+      sender: { name: APP_NAME, email: senderEmail },
       to: [{ email: input.to }],
       subject: input.subject,
       htmlContent: input.html,

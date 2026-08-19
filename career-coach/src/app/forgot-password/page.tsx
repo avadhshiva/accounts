@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { APP_NAME } from "@/lib/brand";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -31,7 +32,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-5 py-10">
       <Link href="/" className="display mb-8 text-2xl font-semibold">
-        Pathly
+        {APP_NAME}
       </Link>
       <div className="panel rounded-[1.75rem] p-6">
         <h1 className="display text-3xl font-semibold">Forgot password</h1>

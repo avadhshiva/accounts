@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatRemaining } from "@/lib/access";
+import { APP_NAME } from "@/lib/brand";
 
 type Access = {
   allowed: boolean;
@@ -84,7 +85,7 @@ export default function UnlockPage() {
   return (
     <div className="mx-auto min-h-screen max-w-xl px-5 py-10">
       <Link href="/" className="display text-2xl font-semibold">
-        Pathly
+        {APP_NAME}
       </Link>
 
       {pilot ? (
@@ -111,7 +112,7 @@ export default function UnlockPage() {
               </h1>
               <p className="mt-3 text-lg text-[var(--ink-soft)]">
                 {expired
-                  ? "Thanks for exploring Pathly. Your feedback will shape what we build next — and help us serve students like you better."
+                  ? `Thanks for exploring ${APP_NAME}. Your feedback will shape what we build next — and help us serve students like you better.`
                   : intro}
               </p>
 

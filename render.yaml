@@ -27,5 +27,5 @@ services:
       - key: ALLOW_TEST_PRO
         value: "false"
       - key: NEXT_PUBLIC_APP_NAME
-        value: Pathly
+        value: LaunchRole
       # DATABASE_URL — set manually in Render dashboard (Supabase URI). Do not commit.
