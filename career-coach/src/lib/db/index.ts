@@ -3,10 +3,12 @@ import { feedbackRepoPg } from "./feedback";
 import { feedbackRepoJson } from "./json/feedback";
 import { interviewRepoJson } from "./json/interviews";
 import { passwordResetRepoJson } from "./json/passwordReset";
+import { progressRepoJson } from "./json/progress";
 import { resumeRepoJson } from "./json/resumes";
 import { userRepoJson } from "./json/users";
 import { interviewRepoPg } from "./interviews";
 import { passwordResetRepoPg } from "./passwordReset";
+import { progressRepoPg } from "./progress";
 import { resumeRepoPg } from "./resumes";
 import { userRepoPg } from "./users";
 
@@ -19,6 +21,7 @@ export const resumeRepo = pick(resumeRepoPg, resumeRepoJson);
 export const interviewRepo = pick(interviewRepoPg, interviewRepoJson);
 export const feedbackRepo = pick(feedbackRepoPg, feedbackRepoJson);
 export const passwordResetRepo = pick(passwordResetRepoPg, passwordResetRepoJson);
+export const progressRepo = pick(progressRepoPg, progressRepoJson);
 
 export { getStorageBackend, isPostgres, closePool } from "./client";
 export { runMigrations } from "./migrate";

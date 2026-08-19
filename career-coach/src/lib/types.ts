@@ -110,4 +110,5 @@ export type DbShape = {
   interviews: InterviewSession[];
   feedback: FeedbackEntry[];
   passwordResetTokens: PasswordResetToken[];
+  userProgress: UserProgress[];
 };

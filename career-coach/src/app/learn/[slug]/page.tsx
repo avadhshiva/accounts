@@ -8,8 +8,7 @@ import { ConceptDiagram } from "@/components/ConceptDiagram";
 import { getLesson } from "@/lib/content";
 import { LESSON_META } from "@/lib/lessonMeta";
 import {
-  isComplete,
-  loadProgress,
+  hydrateLearnProgress,
   markComplete,
   markIncomplete,
 } from "@/lib/progress";
@@ -23,10 +22,11 @@ export default function LessonPage() {
   const [checked, setChecked] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
-    loadProgress();
-    setDone(isComplete(params.slug));
-    setPicked(null);
-    setChecked({});
+    hydrateLearnProgress().then((progress) => {
+      setDone(progress.completed.includes(params.slug));
+      setPicked(null);
+      setChecked({});
+    });
   }, [params.slug]);
 
   if (!found) {

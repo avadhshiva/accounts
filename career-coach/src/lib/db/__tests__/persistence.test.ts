@@ -6,6 +6,7 @@ import {
   feedbackRepo,
   interviewRepo,
   passwordResetRepo,
+  progressRepo,
   resumeRepo,
   runMigrations,
   userRepo,
@@ -148,6 +149,14 @@ describe.skipIf(!hasPg)("PostgreSQL persistence", () => {
       rating: 5,
     });
     expect(id).toBeTruthy();
+  });
+
+  it("persists learn progress with user isolation", async () => {
+    await progressRepo.upsertLearnCompleted(userA, ["what-is-genai"], "2026-01-01T00:00:00.000Z");
+    const rowA = await progressRepo.getByUserId(userA);
+    const rowB = await progressRepo.getByUserId(userB);
+    expect(rowA.learnCompleted).toEqual(["what-is-genai"]);
+    expect(rowB.learnCompleted).toEqual([]);
   });
 });
 

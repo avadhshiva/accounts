@@ -5,14 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShellClient } from "@/components/AppShellClient";
 import { TrackRoadmap } from "@/components/TrackRoadmap";
 import { TRACKS, totalLessonCount } from "@/lib/content";
-import { loadProgress, trackPercent, type LearnProgress } from "@/lib/progress";
+import { trackPercent, hydrateLearnProgress, type LearnProgress } from "@/lib/progress";
 
 export default function LearnPage() {
   const [active, setActive] = useState(TRACKS[0].slug);
   const [progress, setProgress] = useState<LearnProgress>({ completed: [], updatedAt: "" });
 
   useEffect(() => {
-    setProgress(loadProgress());
+    hydrateLearnProgress().then(setProgress);
   }, []);
 
   const track = useMemo(
@@ -72,8 +72,8 @@ export default function LearnPage() {
       </div>
 
       <p className="mt-4 text-xs text-[var(--ink-soft)]">
-        Tip: finish a lesson quiz and hit <strong>Mark complete</strong> to move the path forward. Progress is
-        saved in this browser.
+        Tip: finish a lesson quiz and hit <strong>Mark complete</strong> to move the path forward.
+        Progress saves on this device and syncs to your account when online.
       </p>
     </AppShellClient>
   );

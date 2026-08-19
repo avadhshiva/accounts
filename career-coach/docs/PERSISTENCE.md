@@ -64,8 +64,21 @@ SQL lives in `src/lib/db/schema.sql`. Tables:
 - `interviews` — mock interview sessions
 - `feedback` — pilot feedback
 - `password_reset_tokens` — reset flow
-- `user_progress` — foundation for future learn sync (unused by UI)
+- `user_progress` — learn lesson completions (`learn_completed` JSONB slug array)
 - `aptitude_attempts` — foundation for future aptitude sync (unused by UI)
+
+## Learn progress API
+
+Authenticated users (trial/active access):
+
+- `GET /api/learn/progress` → `{ progress: { completed: string[], updatedAt } }`
+- `PATCH /api/learn/progress` → body `{ completed: string[] }` (valid lesson slugs only)
+
+Client sync (`src/lib/progress.ts`):
+
+- On Learn entry: union-merge `pathly_learn_progress_v1` with server, dual-write
+- Mark complete/incomplete: localStorage first, then PATCH (failure does not block UI)
+- Cross-device incomplete is not perfectly reconciled — union merge preserves completions
 
 ## Tests
 

@@ -11,6 +11,7 @@ const emptyDb = (): DbShape => ({
   interviews: [],
   feedback: [],
   passwordResetTokens: [],
+  userProgress: [],
 });
 
 export async function readDb(): Promise<DbShape> {
@@ -20,6 +21,7 @@ export async function readDb(): Promise<DbShape> {
     const parsed = JSON.parse(raw) as DbShape;
     if (!parsed.feedback) parsed.feedback = [];
     if (!parsed.passwordResetTokens) parsed.passwordResetTokens = [];
+    if (!parsed.userProgress) parsed.userProgress = [];
     return parsed;
   } catch {
     const db = emptyDb();
