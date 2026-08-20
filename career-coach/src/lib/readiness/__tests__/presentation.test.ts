@@ -6,6 +6,8 @@ import {
   formatOverallHeadline,
   gapsEmptyCopy,
   isActionCategoryDone,
+  isMissionNextActionsComplete,
+  missionNextActionsEmptyFallbackCopy,
   missionOnboardingCopy,
   missionProgressPercent,
   pilotDayNumber,
@@ -134,5 +136,67 @@ describe("presentation helpers", () => {
       ),
     ).toBe(false);
     expect(isActionCategoryDone(category({ id: "hr", label: "HR mock" }))).toBe(false);
+  });
+
+  it("isMissionNextActionsComplete is true when all six categories score >= 70", () => {
+    const allComplete = [
+      category({ id: "resume", label: "Resume", status: "complete", score: 80 }),
+      category({ id: "hr", label: "HR mock", status: "complete", score: 75 }),
+      category({ id: "technical", label: "Technical mock", status: "complete", score: 70 }),
+      category({ id: "genai", label: "GenAI mock", status: "complete", score: 85 }),
+      category({ id: "aptitude", label: "Aptitude mock", status: "complete", score: 72 }),
+      category({ id: "learn", label: "Learn progress", status: "complete", score: 90 }),
+    ];
+    expect(isMissionNextActionsComplete(allComplete)).toBe(true);
+  });
+
+  it("isMissionNextActionsComplete is false with one insufficient category", () => {
+    const withInsufficient = [
+      category({ id: "resume", label: "Resume", status: "complete", score: 80 }),
+      category({ id: "hr", label: "HR mock", status: "complete", score: 75 }),
+      category({ id: "technical", label: "Technical mock", status: "complete", score: 70 }),
+      category({ id: "genai", label: "GenAI mock", status: "complete", score: 85 }),
+      category({ id: "aptitude", label: "Aptitude mock", status: "complete", score: 72 }),
+      category({ id: "learn", label: "Learn progress", status: "insufficient_data" }),
+    ];
+    expect(isMissionNextActionsComplete(withInsufficient)).toBe(false);
+  });
+
+  it("isMissionNextActionsComplete is false with one complete score below 70", () => {
+    const withWeak = [
+      category({ id: "resume", label: "Resume", status: "complete", score: 80 }),
+      category({ id: "hr", label: "HR mock", status: "complete", score: 65 }),
+      category({ id: "technical", label: "Technical mock", status: "complete", score: 70 }),
+      category({ id: "genai", label: "GenAI mock", status: "complete", score: 85 }),
+      category({ id: "aptitude", label: "Aptitude mock", status: "complete", score: 72 }),
+      category({ id: "learn", label: "Learn progress", status: "complete", score: 90 }),
+    ];
+    expect(isMissionNextActionsComplete(withWeak)).toBe(false);
+  });
+
+  it("isMissionNextActionsComplete is false for empty or non-six category lists", () => {
+    expect(isMissionNextActionsComplete([])).toBe(false);
+    expect(
+      isMissionNextActionsComplete([
+        category({ id: "resume", label: "Resume", status: "complete", score: 80 }),
+      ]),
+    ).toBe(false);
+  });
+
+  it("isMissionNextActionsComplete requires numeric scores", () => {
+    const withoutNumericScore = [
+      category({ id: "resume", label: "Resume", status: "complete" }),
+      category({ id: "hr", label: "HR mock", status: "complete", score: 75 }),
+      category({ id: "technical", label: "Technical mock", status: "complete", score: 70 }),
+      category({ id: "genai", label: "GenAI mock", status: "complete", score: 85 }),
+      category({ id: "aptitude", label: "Aptitude mock", status: "complete", score: 72 }),
+      category({ id: "learn", label: "Learn progress", status: "complete", score: 90 }),
+    ];
+    expect(isMissionNextActionsComplete(withoutNumericScore)).toBe(false);
+  });
+
+  it("missionNextActionsEmptyFallbackCopy does not mention resume specifically", () => {
+    expect(missionNextActionsEmptyFallbackCopy()).toContain("Complete assessments");
+    expect(missionNextActionsEmptyFallbackCopy().toLowerCase()).not.toContain("resume");
   });
 });

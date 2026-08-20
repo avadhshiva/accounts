@@ -118,6 +118,20 @@ export function missionOnboardingCopy(): string {
   return "Start with a resume score, then complete mock interviews to build your placement readiness picture.";
 }
 
+export function missionNextActionsEmptyFallbackCopy(): string {
+  return "Complete assessments to generate your next mission actions.";
+}
+
+export function isMissionNextActionsComplete(categories: ReadinessCategory[]): boolean {
+  if (categories.length !== MISSION_CATEGORY_COUNT) return false;
+  return categories.every(
+    (category) =>
+      category.status === "complete" &&
+      typeof category.score === "number" &&
+      category.score >= 70,
+  );
+}
+
 export function isActionCategoryDone(category: ReadinessCategory | undefined): boolean {
   if (!category || category.status !== "complete") return false;
   return typeof category.score === "number" && category.score >= 70;
