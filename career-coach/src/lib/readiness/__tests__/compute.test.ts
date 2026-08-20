@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { getAllLessons } from "@/lib/content";
 import { computeReadiness } from "../compute";
 import type { ReadinessComputeInput } from "../types";
 
@@ -17,7 +18,7 @@ describe("computeReadiness", () => {
     expect(result.strengths).toEqual([]);
     expect(result.gaps).toEqual([]);
     expect(
-      result.categories.every((c) => c.id === "learn" || c.status === "insufficient_data"),
+      result.categories.every((c) => c.status === "insufficient_data"),
     ).toBe(true);
   });
 
@@ -245,11 +246,134 @@ describe("computeReadiness", () => {
     expect(result.strengths).toEqual([]);
   });
 
-  it("marks learn as insufficient_data", () => {
-    const result = compute({ resumes: [], interviews: [] });
+  it("marks learn as insufficient_data when no lessons completed", () => {
+    const result = compute({ resumes: [], interviews: [], learnCompleted: [] });
     expect(result.categories.find((c) => c.id === "learn")).toMatchObject({
       status: "insufficient_data",
     });
+    expect(result.overall).toBeUndefined();
+  });
+
+  it("scores learn from partial persisted lesson completion", () => {
+    const result = compute({
+      resumes: [],
+      interviews: [],
+      learnCompleted: ["what-is-genai"],
+      learnProgressUpdatedAt: "2026-02-01T00:00:00.000Z",
+    });
+    const learn = result.categories.find((c) => c.id === "learn");
+    expect(learn).toMatchObject({
+      status: "complete",
+      score: 6,
+      source: "learn_progress",
+      assessedAt: "2026-02-01T00:00:00.000Z",
+    });
+    expect(result.overall).toBe(6);
+    expect(result.completedCategoryCount).toBe(1);
+  });
+
+  it("scores learn at 100 when all canonical lessons are completed", () => {
+    const allSlugs = getAllLessons().map((l) => l.slug);
+    const result = compute({
+      resumes: [],
+      interviews: [],
+      learnCompleted: allSlugs,
+    });
+    expect(result.categories.find((c) => c.id === "learn")).toMatchObject({
+      status: "complete",
+      score: 100,
+    });
+    expect(result.overall).toBe(100);
+  });
+
+  it("ignores invalid lesson slugs when scoring learn", () => {
+    const withInvalid = compute({
+      resumes: [],
+      interviews: [],
+      learnCompleted: ["what-is-genai", "not-a-real-lesson"],
+    });
+    const validOnly = compute({
+      resumes: [],
+      interviews: [],
+      learnCompleted: ["what-is-genai"],
+    });
+    expect(withInvalid.categories.find((c) => c.id === "learn")?.score).toBe(
+      validOnly.categories.find((c) => c.id === "learn")?.score,
+    );
+  });
+
+  it("includes learn in overall only when learn has a valid score", () => {
+    const result = compute({
+      resumes: [
+        {
+          createdAt: "2026-01-01T00:00:00.000Z",
+          score: 80,
+          strengths: [],
+          gaps: [],
+        },
+      ],
+      interviews: [],
+      learnCompleted: ["what-is-genai"],
+    });
+    expect(result.overall).toBe(43);
+    expect(result.completedCategoryCount).toBe(2);
+  });
+
+  it("does not fabricate strengths from learn progress", () => {
+    const result = compute({
+      resumes: [],
+      interviews: [],
+      learnCompleted: ["what-is-genai", "prompting-that-works"],
+    });
+    expect(result.strengths).toEqual([]);
+  });
+
+  it("adds learn weak-category gap from actual score without fabrication", () => {
+    const result = compute({
+      resumes: [],
+      interviews: [],
+      learnCompleted: ["what-is-genai"],
+    });
+    expect(result.gaps.some((g) => g.includes("Learn progress below 70"))).toBe(true);
+  });
+
+  it("preserves resume and HR scoring when learn progress is present", () => {
+    const result = compute({
+      resumes: [
+        {
+          createdAt: "2026-01-01T00:00:00.000Z",
+          score: 80,
+          strengths: [],
+          gaps: [],
+        },
+      ],
+      interviews: [
+        {
+          createdAt: "2026-01-02T00:00:00.000Z",
+          mode: "hr",
+          status: "completed",
+          scorecard: {
+            overall: 60,
+            feedback: "ok",
+            improvements: ["use STAR"],
+          },
+        },
+      ],
+      learnCompleted: ["what-is-genai"],
+    });
+    expect(result.categories.find((c) => c.id === "resume")).toMatchObject({
+      status: "complete",
+      score: 80,
+    });
+    expect(result.categories.find((c) => c.id === "hr")).toMatchObject({
+      status: "complete",
+      score: 60,
+    });
+    expect(result.categories.find((c) => c.id === "learn")).toMatchObject({
+      status: "complete",
+      score: 6,
+    });
+    expect(result.overall).toBe(49);
   });
 
   it("clamps overall score to 0-100", () => {

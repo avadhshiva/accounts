@@ -51,4 +51,7 @@ export type ReadinessComputeInput = {
       improvements: string[];
     };
   }>;
+  /** Valid lesson slugs from persisted user_progress.learn_completed */
+  learnCompleted?: string[];
+  learnProgressUpdatedAt?: string;
 };

@@ -1,5 +1,5 @@
 import type { InterviewSession, ResumeAnalysis } from "../types";
-import { interviewRepo, resumeRepo } from "../db";
+import { interviewRepo, progressRepo, resumeRepo } from "../db";
 import { computeReadiness } from "./compute";
 import type { ReadinessSnapshot } from "./types";
 
@@ -30,9 +30,12 @@ function toInterviewInput(interviews: InterviewSession[]) {
 export async function getReadinessForUser(userId: string): Promise<ReadinessSnapshot> {
   const resumes = await resumeRepo.listByUserId(userId, 50);
   const interviews = await interviewRepo.listByUserId(userId, 50);
+  const progress = await progressRepo.getByUserId(userId);
   return computeReadiness({
     resumes: toResumeInput(resumes),
     interviews: toInterviewInput(interviews),
+    learnCompleted: progress.learnCompleted,
+    learnProgressUpdatedAt: progress.updatedAt,
   });
 }
 

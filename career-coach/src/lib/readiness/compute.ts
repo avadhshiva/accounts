@@ -5,6 +5,8 @@ import type {
   ReadinessComputeInput,
   ReadinessSnapshot,
 } from "./types";
+import { totalLessonCount } from "@/lib/content";
+import { normalizeCompleted } from "@/lib/learn/merge";
 
 const CATEGORY_LABELS: Record<ReadinessCategoryId, string> = {
   resume: "Resume",
@@ -63,6 +65,30 @@ function buildResumeCategory(
     score: clampScore(latestResume.score),
     source: "latest_resume",
     assessedAt: latestResume.createdAt,
+  };
+}
+
+function buildLearnCategory(
+  learnCompleted: string[],
+  learnProgressUpdatedAt?: string,
+): ReadinessCategory {
+  const completed = normalizeCompleted(learnCompleted);
+  if (completed.length === 0) {
+    return {
+      id: "learn",
+      label: CATEGORY_LABELS.learn,
+      status: "insufficient_data",
+    };
+  }
+  const total = totalLessonCount();
+  const score = clampScore((completed.length / total) * 100);
+  return {
+    id: "learn",
+    label: CATEGORY_LABELS.learn,
+    status: "complete",
+    score,
+    source: "learn_progress",
+    assessedAt: learnProgressUpdatedAt,
   };
 }
 
@@ -175,7 +201,11 @@ function buildNextActions(
     });
   }
 
-  if (actions.length < 4) {
+  const learnCategory = completedCategories.find((c) => c.id === "learn");
+  if (
+    (!learnCategory || learnCategory.status === "insufficient_data") &&
+    actions.length < 4
+  ) {
     actions.push({
       label: "Explore a lesson",
       href: "/learn",
@@ -199,6 +229,7 @@ function buildNextActions(
 
 export function computeReadiness(input: ReadinessComputeInput, now = new Date()): ReadinessSnapshot {
   const latestResume = latestByCreatedAt(input.resumes);
+  const learnCompleted = input.learnCompleted ?? [];
 
   const categories: ReadinessCategory[] = [
     buildResumeCategory(latestResume),
@@ -206,11 +237,7 @@ export function computeReadiness(input: ReadinessComputeInput, now = new Date())
     buildInterviewCategory("technical", "technical", input.interviews),
     buildInterviewCategory("genai", "genai", input.interviews),
     buildInterviewCategory("aptitude", "aptitude", input.interviews),
-    {
-      id: "learn",
-      label: CATEGORY_LABELS.learn,
-      status: "insufficient_data",
-    },
+    buildLearnCategory(learnCompleted, input.learnProgressUpdatedAt),
   ];
 
   const scoredCategories = categories.filter(
