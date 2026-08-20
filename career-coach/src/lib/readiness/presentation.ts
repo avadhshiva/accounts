@@ -1,18 +1,19 @@
+import type { InterviewMode } from "@/lib/types";
 import type { ReadinessCategory, ReadinessCategoryId, ReadinessSnapshot } from "./types";
 
 export const MISSION_CATEGORY_COUNT = 6;
 
-const CATEGORY_HREF: Record<ReadinessCategoryId, string> = {
-  resume: "/resume",
-  hr: "/interview",
-  technical: "/interview",
-  genai: "/interview",
-  aptitude: "/interview",
-  learn: "/learn",
-};
+const MOCK_CATEGORY_IDS: InterviewMode[] = ["hr", "technical", "genai", "aptitude"];
+
+export function interviewModeForCategory(id: ReadinessCategoryId): InterviewMode | null {
+  return MOCK_CATEGORY_IDS.includes(id as InterviewMode) ? (id as InterviewMode) : null;
+}
 
 export function categoryHref(id: ReadinessCategoryId): string {
-  return CATEGORY_HREF[id];
+  const mode = interviewModeForCategory(id);
+  if (mode) return `/interview?mode=${mode}`;
+  if (id === "resume") return "/resume";
+  return "/learn";
 }
 
 export function missionProgressPercent(completedCategoryCount: number): number {

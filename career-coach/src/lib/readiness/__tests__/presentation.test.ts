@@ -104,8 +104,16 @@ describe("presentation helpers", () => {
     expect(pilotDayNumber(start.toISOString(), now, 7)).toBe(2);
   });
 
-  it("categoryHref for aptitude points to interview", () => {
-    expect(categoryHref("aptitude")).toBe("/interview");
+  it("categoryHref for mock categories includes interview mode query param", () => {
+    expect(categoryHref("hr")).toBe("/interview?mode=hr");
+    expect(categoryHref("technical")).toBe("/interview?mode=technical");
+    expect(categoryHref("genai")).toBe("/interview?mode=genai");
+    expect(categoryHref("aptitude")).toBe("/interview?mode=aptitude");
+  });
+
+  it("categoryHref for resume and learn omit query params", () => {
+    expect(categoryHref("resume")).toBe("/resume");
+    expect(categoryHref("learn")).toBe("/learn");
   });
 
   it("empty copy helpers return onboarding strings", () => {

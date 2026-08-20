@@ -7,6 +7,7 @@ import type {
 } from "./types";
 import { totalLessonCount } from "@/lib/content";
 import { normalizeCompleted } from "@/lib/learn/merge";
+import { categoryHref } from "./presentation";
 
 const CATEGORY_LABELS: Record<ReadinessCategoryId, string> = {
   resume: "Resume",
@@ -23,15 +24,6 @@ const INTERVIEW_MODES: Array<"hr" | "technical" | "genai" | "aptitude"> = [
   "genai",
   "aptitude",
 ];
-
-const CATEGORY_HREF: Record<ReadinessCategoryId, string> = {
-  resume: "/resume",
-  hr: "/interview",
-  technical: "/interview",
-  genai: "/interview",
-  aptitude: "/interview",
-  learn: "/learn",
-};
 
 /** Mission action priority: insufficient categories first, fixed order. */
 const NEXT_ACTION_CATEGORY_ORDER: ReadinessCategoryId[] = [
@@ -189,7 +181,7 @@ function buildNextActions(categories: ReadinessCategory[]): ReadinessAction[] {
     if (category?.status !== "insufficient_data") continue;
     actions.push({
       label: INSUFFICIENT_ACTION_LABELS[id],
-      href: CATEGORY_HREF[id],
+      href: categoryHref(id),
       categoryId: id,
     });
     covered.add(id);
@@ -207,7 +199,7 @@ function buildNextActions(categories: ReadinessCategory[]): ReadinessAction[] {
       const weakest = [...weakScored].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0];
       actions.push({
         label: `Improve ${weakest.label.toLowerCase()} (score below 70)`,
-        href: CATEGORY_HREF[weakest.id],
+        href: categoryHref(weakest.id),
         categoryId: weakest.id,
       });
     }

@@ -213,7 +213,7 @@ describe("computeReadiness", () => {
     });
     expect(result.nextActions.some((a) => a.label === "Complete HR mock interview")).toBe(true);
     expect(result.nextActions.find((a) => a.categoryId === "hr")).toMatchObject({
-      href: "/interview",
+      href: "/interview?mode=hr",
     });
   });
 
@@ -423,7 +423,19 @@ describe("computeReadiness", () => {
 });
 
 describe("nextActions", () => {
-  const VALID_ROUTES = new Set(["/resume", "/interview", "/learn"]);
+  const VALID_PATHS = new Set(["/resume", "/interview", "/learn"]);
+  const VALID_INTERVIEW_MODES = new Set(["hr", "technical", "genai", "aptitude"]);
+
+  function isValidActionHref(href: string): boolean {
+    const [pathname, search] = href.split("?");
+    if (!VALID_PATHS.has(pathname)) return false;
+    if (pathname === "/interview") {
+      if (!search) return false;
+      const mode = new URLSearchParams(search).get("mode");
+      return mode !== null && VALID_INTERVIEW_MODES.has(mode);
+    }
+    return !search;
+  }
 
   it("lists insufficient categories in mission order before weak scores", () => {
     const result = compute({
@@ -490,12 +502,18 @@ describe("nextActions", () => {
       "Complete GenAI mock interview",
       "Complete aptitude mock interview",
     ]);
+    expect(result.nextActions.slice(0, 4).map((a) => a.href)).toEqual([
+      "/interview?mode=hr",
+      "/interview?mode=technical",
+      "/interview?mode=genai",
+      "/interview?mode=aptitude",
+    ]);
   });
 
-  it("routes every nextAction to an existing product route", () => {
+  it("routes every nextAction to an existing product route with mode when needed", () => {
     const result = compute({ resumes: [], interviews: [] });
     for (const action of result.nextActions) {
-      expect(VALID_ROUTES.has(action.href)).toBe(true);
+      expect(isValidActionHref(action.href)).toBe(true);
     }
   });
 
@@ -513,7 +531,9 @@ describe("nextActions", () => {
     });
     expect(result.nextActions.some((a) => a.href === "/practice")).toBe(false);
     expect(result.nextActions.some((a) => a.categoryId === "aptitude")).toBe(true);
-    expect(result.nextActions.find((a) => a.categoryId === "aptitude")?.href).toBe("/interview");
+    expect(result.nextActions.find((a) => a.categoryId === "aptitude")?.href).toBe(
+      "/interview?mode=aptitude",
+    );
   });
 
   it("adds weak learn action only after insufficient categories are covered", () => {
