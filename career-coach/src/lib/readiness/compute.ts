@@ -33,6 +33,25 @@ const CATEGORY_HREF: Record<ReadinessCategoryId, string> = {
   learn: "/learn",
 };
 
+/** Mission action priority: insufficient categories first, fixed order. */
+const NEXT_ACTION_CATEGORY_ORDER: ReadinessCategoryId[] = [
+  "resume",
+  "hr",
+  "technical",
+  "genai",
+  "aptitude",
+  "learn",
+];
+
+const INSUFFICIENT_ACTION_LABELS: Record<ReadinessCategoryId, string> = {
+  resume: "Score your resume",
+  hr: "Complete HR mock interview",
+  technical: "Complete technical mock interview",
+  genai: "Complete GenAI mock interview",
+  aptitude: "Complete aptitude mock interview",
+  learn: "Explore a lesson",
+};
+
 function latestByCreatedAt<T extends { createdAt: string }>(items: T[]): T | undefined {
   if (items.length === 0) return undefined;
   return [...items].sort(
@@ -160,68 +179,38 @@ function collectGaps(
   return gaps.slice(0, 3);
 }
 
-function hasCompletedInterview(interviews: ReadinessComputeInput["interviews"]): boolean {
-  return interviews.some((i) => i.status === "completed" && i.scorecard);
-}
-
-function buildNextActions(
-  latestResume: ReadinessComputeInput["resumes"][number] | undefined,
-  interviews: ReadinessComputeInput["interviews"],
-  completedCategories: ReadinessCategory[],
-): ReadinessAction[] {
+function buildNextActions(categories: ReadinessCategory[]): ReadinessAction[] {
   const actions: ReadinessAction[] = [];
+  const covered = new Set<ReadinessCategoryId>();
 
-  if (!latestResume) {
+  for (const id of NEXT_ACTION_CATEGORY_ORDER) {
+    if (actions.length >= 4) break;
+    const category = categories.find((c) => c.id === id);
+    if (category?.status !== "insufficient_data") continue;
     actions.push({
-      label: "Score your resume",
-      href: "/resume",
-      categoryId: "resume",
+      label: INSUFFICIENT_ACTION_LABELS[id],
+      href: CATEGORY_HREF[id],
+      categoryId: id,
     });
+    covered.add(id);
   }
 
-  const scoredComplete = completedCategories.filter(
-    (c) => c.status === "complete" && typeof c.score === "number",
-  );
-  if (scoredComplete.length > 0) {
-    const weakest = [...scoredComplete].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0];
-    if (weakest.score !== undefined && weakest.score < 70) {
+  if (actions.length < 4) {
+    const weakScored = categories.filter(
+      (c) =>
+        c.status === "complete" &&
+        typeof c.score === "number" &&
+        c.score < 70 &&
+        !covered.has(c.id),
+    );
+    if (weakScored.length > 0) {
+      const weakest = [...weakScored].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0];
       actions.push({
         label: `Improve ${weakest.label.toLowerCase()} (score below 70)`,
         href: CATEGORY_HREF[weakest.id],
         categoryId: weakest.id,
       });
     }
-  }
-
-  if (!hasCompletedInterview(interviews)) {
-    actions.push({
-      label: "Complete a mock interview",
-      href: "/interview",
-      categoryId: "hr",
-    });
-  }
-
-  const learnCategory = completedCategories.find((c) => c.id === "learn");
-  if (
-    (!learnCategory || learnCategory.status === "insufficient_data") &&
-    actions.length < 4
-  ) {
-    actions.push({
-      label: "Explore a lesson",
-      href: "/learn",
-      categoryId: "learn",
-    });
-  }
-
-  const aptitudeComplete = completedCategories.find(
-    (c) => c.id === "aptitude" && c.status === "complete",
-  );
-  if (!aptitudeComplete && actions.length < 4) {
-    actions.push({
-      label: "Try aptitude drill",
-      href: "/practice",
-      categoryId: "aptitude",
-    });
   }
 
   return actions.slice(0, 4);
@@ -258,7 +247,7 @@ export function computeReadiness(input: ReadinessComputeInput, now = new Date())
 
   const gaps = collectGaps(latestResume, input.interviews, categories);
 
-  const nextActions = buildNextActions(latestResume, input.interviews, categories);
+  const nextActions = buildNextActions(categories);
 
   return {
     computedAt: now.toISOString(),

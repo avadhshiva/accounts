@@ -142,6 +142,7 @@ describe("computeReadiness", () => {
   });
 
   it("adds weak-category nextAction when a completed category is below 70", () => {
+    const allSlugs = getAllLessons().map((l) => l.slug);
     const result = compute({
       resumes: [
         {
@@ -158,7 +159,26 @@ describe("computeReadiness", () => {
           status: "completed",
           scorecard: { overall: 55, feedback: "weak", improvements: [] },
         },
+        {
+          createdAt: "2026-01-03T00:00:00.000Z",
+          mode: "technical",
+          status: "completed",
+          scorecard: { overall: 80, feedback: "ok", improvements: [] },
+        },
+        {
+          createdAt: "2026-01-04T00:00:00.000Z",
+          mode: "genai",
+          status: "completed",
+          scorecard: { overall: 80, feedback: "ok", improvements: [] },
+        },
+        {
+          createdAt: "2026-01-05T00:00:00.000Z",
+          mode: "aptitude",
+          status: "completed",
+          scorecard: { overall: 80, feedback: "ok", improvements: [] },
+        },
       ],
+      learnCompleted: allSlugs,
     });
     expect(result.nextActions.some((a) => a.label.toLowerCase().includes("below 70"))).toBe(
       true,
@@ -173,7 +193,7 @@ describe("computeReadiness", () => {
     });
   });
 
-  it("suggests completing a mock interview when none are completed", () => {
+  it("suggests HR mock interview when HR is not assessed", () => {
     const result = compute({
       resumes: [
         {
@@ -191,7 +211,10 @@ describe("computeReadiness", () => {
         },
       ],
     });
-    expect(result.nextActions.some((a) => a.label === "Complete a mock interview")).toBe(true);
+    expect(result.nextActions.some((a) => a.label === "Complete HR mock interview")).toBe(true);
+    expect(result.nextActions.find((a) => a.categoryId === "hr")).toMatchObject({
+      href: "/interview",
+    });
   });
 
   it("uses scorecard improvements for gaps when resume gaps are empty", () => {
@@ -396,5 +419,190 @@ describe("computeReadiness", () => {
       ],
     });
     expect(result.overall).toBe(100);
+  });
+});
+
+describe("nextActions", () => {
+  const VALID_ROUTES = new Set(["/resume", "/interview", "/learn"]);
+
+  it("lists insufficient categories in mission order before weak scores", () => {
+    const result = compute({
+      resumes: [
+        {
+          createdAt: "2026-01-01T00:00:00.000Z",
+          score: 85,
+          strengths: [],
+          gaps: [],
+        },
+      ],
+      interviews: [
+        {
+          createdAt: "2026-01-02T00:00:00.000Z",
+          mode: "hr",
+          status: "completed",
+          scorecard: { overall: 55, feedback: "weak", improvements: [] },
+        },
+      ],
+      learnCompleted: ["what-is-genai"],
+    });
+    expect(result.nextActions.map((a) => a.categoryId)).toEqual([
+      "technical",
+      "genai",
+      "aptitude",
+      "learn",
+    ]);
+  });
+
+  it("prioritizes insufficient resume before weak scored categories", () => {
+    const result = compute({
+      resumes: [],
+      interviews: [
+        {
+          createdAt: "2026-01-02T00:00:00.000Z",
+          mode: "hr",
+          status: "completed",
+          scorecard: { overall: 55, feedback: "weak", improvements: [] },
+        },
+      ],
+    });
+    expect(result.nextActions[0]).toMatchObject({
+      label: "Score your resume",
+      href: "/resume",
+      categoryId: "resume",
+    });
+  });
+
+  it("uses category-specific interview actions for each insufficient mock mode", () => {
+    const result = compute({
+      resumes: [
+        {
+          createdAt: "2026-01-01T00:00:00.000Z",
+          score: 80,
+          strengths: [],
+          gaps: [],
+        },
+      ],
+      interviews: [],
+    });
+    expect(result.nextActions.slice(0, 4).map((a) => a.label)).toEqual([
+      "Complete HR mock interview",
+      "Complete technical mock interview",
+      "Complete GenAI mock interview",
+      "Complete aptitude mock interview",
+    ]);
+  });
+
+  it("routes every nextAction to an existing product route", () => {
+    const result = compute({ resumes: [], interviews: [] });
+    for (const action of result.nextActions) {
+      expect(VALID_ROUTES.has(action.href)).toBe(true);
+    }
+  });
+
+  it("does not recommend aptitude practice drill when aptitude mock is insufficient", () => {
+    const result = compute({
+      resumes: [
+        {
+          createdAt: "2026-01-01T00:00:00.000Z",
+          score: 80,
+          strengths: [],
+          gaps: [],
+        },
+      ],
+      interviews: [],
+    });
+    expect(result.nextActions.some((a) => a.href === "/practice")).toBe(false);
+    expect(result.nextActions.some((a) => a.categoryId === "aptitude")).toBe(true);
+    expect(result.nextActions.find((a) => a.categoryId === "aptitude")?.href).toBe("/interview");
+  });
+
+  it("adds weak learn action only after insufficient categories are covered", () => {
+    const result = compute({
+      resumes: [
+        {
+          createdAt: "2026-01-01T00:00:00.000Z",
+          score: 85,
+          strengths: [],
+          gaps: [],
+        },
+      ],
+      interviews: [
+        {
+          createdAt: "2026-01-02T00:00:00.000Z",
+          mode: "hr",
+          status: "completed",
+          scorecard: { overall: 80, feedback: "ok", improvements: [] },
+        },
+        {
+          createdAt: "2026-01-03T00:00:00.000Z",
+          mode: "technical",
+          status: "completed",
+          scorecard: { overall: 80, feedback: "ok", improvements: [] },
+        },
+        {
+          createdAt: "2026-01-04T00:00:00.000Z",
+          mode: "genai",
+          status: "completed",
+          scorecard: { overall: 80, feedback: "ok", improvements: [] },
+        },
+        {
+          createdAt: "2026-01-05T00:00:00.000Z",
+          mode: "aptitude",
+          status: "completed",
+          scorecard: { overall: 80, feedback: "ok", improvements: [] },
+        },
+      ],
+      learnCompleted: ["what-is-genai"],
+    });
+    expect(result.nextActions).toHaveLength(1);
+    expect(result.nextActions[0]).toMatchObject({
+      categoryId: "learn",
+      href: "/learn",
+    });
+    expect(result.nextActions[0].label.toLowerCase()).toContain("below 70");
+  });
+});
+
+describe("Change 5 scoring regression", () => {
+  it("preserves learn and overall calculations", () => {
+    const partialLearn = compute({
+      resumes: [
+        {
+          createdAt: "2026-01-01T00:00:00.000Z",
+          score: 80,
+          strengths: [],
+          gaps: [],
+        },
+      ],
+      interviews: [],
+      learnCompleted: ["what-is-genai"],
+    });
+    expect(partialLearn.categories.find((c) => c.id === "learn")).toMatchObject({
+      status: "complete",
+      score: 6,
+    });
+    expect(partialLearn.overall).toBe(43);
+
+    const resumeHrLearn = compute({
+      resumes: [
+        {
+          createdAt: "2026-01-01T00:00:00.000Z",
+          score: 80,
+          strengths: [],
+          gaps: [],
+        },
+      ],
+      interviews: [
+        {
+          createdAt: "2026-01-02T00:00:00.000Z",
+          mode: "hr",
+          status: "completed",
+          scorecard: { overall: 60, feedback: "ok", improvements: [] },
+        },
+      ],
+      learnCompleted: ["what-is-genai"],
+    });
+    expect(resumeHrLearn.overall).toBe(49);
+    expect(resumeHrLearn.completedCategoryCount).toBe(3);
   });
 });
