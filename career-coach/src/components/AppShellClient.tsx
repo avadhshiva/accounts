@@ -141,6 +141,17 @@ export function AppShellClient({
             </button>
           </div>
         </div>
+        <div className="flex gap-3 overflow-x-auto px-5 pb-3 md:hidden">
+          {links.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="btn btn-ghost whitespace-nowrap px-3 py-1.5 text-xs"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
       </header>
       <main className="mx-auto max-w-6xl px-5 py-8">
         <h1 className="display text-3xl font-semibold md:text-4xl">{title}</h1>
