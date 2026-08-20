@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { AppShellClient } from "@/components/AppShellClient";
 
@@ -85,6 +86,9 @@ export default function ResumePage() {
                 </div>
               </div>
               <Block title="Keywords to add" items={analysis.keywordsToAdd} />
+              <Link href="/dashboard" className="btn btn-primary mt-4 inline-flex text-sm">
+                View Placement Mission →
+              </Link>
             </div>
           )}
         </div>

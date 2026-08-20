@@ -171,6 +171,11 @@ export default function LessonPage() {
                 </Link>
               )}
             </div>
+            {done ? (
+              <Link href="/dashboard" className="btn btn-ghost mt-3 inline-flex w-full text-sm">
+                View Placement Mission →
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>

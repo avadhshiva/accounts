@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppShellClient } from "@/components/AppShellClient";
@@ -181,6 +182,9 @@ export default function InterviewClient() {
                     <li key={i}>{i}</li>
                   ))}
                 </ul>
+                <Link href="/dashboard" className="btn btn-accent mt-4 inline-flex text-sm">
+                  View Placement Mission →
+                </Link>
               </div>
             )}
           </div>
