@@ -1,10 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppShellClient } from "@/components/AppShellClient";
+import { HrWarmUp } from "@/components/interview/HrWarmUp";
+import { PracticePanel } from "@/components/interview/PracticePanel";
 import { INTERVIEW_MODES } from "@/lib/content";
+import {
+  parseInterviewIntentParam,
+  type InterviewIntent,
+} from "@/lib/interview/intent";
 import { parseInterviewModeParam } from "@/lib/interview/mode";
 import type { InterviewMode } from "@/lib/types";
 
@@ -24,22 +30,38 @@ type Session = {
   };
 };
 
+type Phase = "setup" | "practice" | "hr-warmup" | "session";
+
 export default function InterviewClient() {
   const searchParams = useSearchParams();
-  const [mode, setMode] = useState<InterviewMode>(() =>
-    parseInterviewModeParam(searchParams.get("mode")),
-  );
+  const modeParam = searchParams.get("mode");
+  const intentParam = searchParams.get("intent");
+  const modeFromUrl = parseInterviewModeParam(modeParam);
+  const intentFromUrl = parseInterviewIntentParam(intentParam);
+
+  const [mode, setMode] = useState<InterviewMode>(modeFromUrl);
+  const [intent, setIntent] = useState<InterviewIntent | null>(intentFromUrl);
+  const [trackedModeParam, setTrackedModeParam] = useState(modeParam);
+  const [trackedIntentParam, setTrackedIntentParam] = useState(intentParam);
+  const [phase, setPhase] = useState<Phase>("setup");
   const [session, setSession] = useState<Session | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (session) return;
-    setMode(parseInterviewModeParam(searchParams.get("mode")));
-  }, [searchParams, session]);
+  // Sync from Change 7 deep-link URL changes while on setup (React render-time adjust).
+  if (!session && phase === "setup") {
+    if (modeParam !== trackedModeParam) {
+      setTrackedModeParam(modeParam);
+      setMode(modeFromUrl);
+    }
+    if (intentParam !== trackedIntentParam) {
+      setTrackedIntentParam(intentParam);
+      setIntent(intentFromUrl);
+    }
+  }
 
-  async function start() {
+  async function startAssessment() {
     setLoading(true);
     setError("");
     const res = await fetch("/api/interview/start", {
@@ -51,9 +73,25 @@ export default function InterviewClient() {
     setLoading(false);
     if (!res.ok) {
       setError(data.error || "Could not start");
+      setPhase("setup");
       return;
     }
     setSession(data.session);
+    setPhase("session");
+  }
+
+  function beginAssess() {
+    setError("");
+    if (mode === "hr") {
+      setPhase("hr-warmup");
+      return;
+    }
+    void startAssessment();
+  }
+
+  function beginPractice() {
+    setError("");
+    setPhase("practice");
   }
 
   async function send(finish = false) {
@@ -83,7 +121,28 @@ export default function InterviewClient() {
 
   return (
     <AppShellClient title="Mock Interview">
-      {!session ? (
+      {phase === "practice" ? (
+        <PracticePanel
+          mode={mode}
+          onExit={() => {
+            setPhase("setup");
+            setIntent(null);
+          }}
+        />
+      ) : null}
+
+      {phase === "hr-warmup" ? (
+        <HrWarmUp
+          onSkip={() => {
+            void startAssessment();
+          }}
+          onContinueToAssessment={() => {
+            void startAssessment();
+          }}
+        />
+      ) : null}
+
+      {phase === "setup" && !session ? (
         <div className="panel max-w-2xl rounded-[1.5rem] p-6">
           <p className="text-sm text-[var(--ink-soft)]">
             Pick a round that matches campus drives — technical coding, aptitude, HR, or GenAI.
@@ -92,6 +151,7 @@ export default function InterviewClient() {
             {INTERVIEW_MODES.map((m) => (
               <button
                 key={m.id}
+                type="button"
                 className={`rounded-2xl border p-4 text-left transition ${
                   mode === m.id
                     ? "border-[var(--accent)] bg-[var(--accent)]/10"
@@ -109,12 +169,73 @@ export default function InterviewClient() {
               Selected: <span className="font-semibold text-[var(--ink)]">{selected.label}</span>
             </p>
           ) : null}
+
+          <p className="mt-6 text-sm font-semibold">How do you want to prepare?</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              className={`rounded-2xl border p-4 text-left transition ${
+                intent === "practice"
+                  ? "border-[var(--accent)] bg-[var(--accent)]/10"
+                  : "border-[var(--line)] bg-white/70 hover:border-[var(--accent)]/40"
+              }`}
+              onClick={() => setIntent("practice")}
+            >
+              <p className="font-semibold">Practice Mode</p>
+              <p className="mt-1 text-xs text-[var(--ink-soft)]">
+                Untimed · Hints · No score · No limit used
+              </p>
+              <p className="mt-2 text-xs text-[var(--ink-soft)]">
+                Practice without using an assessment attempt.
+              </p>
+            </button>
+            <button
+              type="button"
+              className={`rounded-2xl border p-4 text-left transition ${
+                intent === "assess"
+                  ? "border-[var(--accent)] bg-[var(--accent)]/10"
+                  : "border-[var(--line)] bg-white/70 hover:border-[var(--accent)]/40"
+              }`}
+              onClick={() => setIntent("assess")}
+            >
+              <p className="font-semibold">Assess Mode</p>
+              <p className="mt-1 text-xs text-[var(--ink-soft)]">
+                Scored · Counts toward readiness · Uses one mock attempt
+              </p>
+              <p className="mt-2 text-xs text-[var(--ink-soft)]">
+                Take a scored assessment that contributes to your readiness.
+              </p>
+            </button>
+          </div>
+
           {error ? <p className="mt-3 text-sm text-[var(--accent-2)]">{error}</p> : null}
-          <button className="btn btn-accent mt-5" onClick={start} disabled={loading}>
-            {loading ? "Starting..." : "Start interview"}
-          </button>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="btn btn-accent"
+              disabled={loading || intent !== "practice"}
+              onClick={beginPractice}
+            >
+              Start practice
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={loading || intent !== "assess"}
+              onClick={beginAssess}
+            >
+              {loading
+                ? "Starting..."
+                : mode === "hr"
+                  ? "Continue to HR Assessment"
+                  : "Start interview"}
+            </button>
+          </div>
         </div>
-      ) : (
+      ) : null}
+
+      {phase === "session" && session ? (
         <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="panel rounded-[1.5rem] p-5">
             <div className="mb-4 flex items-center justify-between text-sm">
@@ -159,7 +280,14 @@ export default function InterviewClient() {
                 </div>
               </div>
             ) : (
-              <button className="btn btn-primary mt-4 text-sm" onClick={() => setSession(null)}>
+              <button
+                className="btn btn-primary mt-4 text-sm"
+                onClick={() => {
+                  setSession(null);
+                  setPhase("setup");
+                  setIntent(null);
+                }}
+              >
                 New interview
               </button>
             )}
@@ -189,7 +317,7 @@ export default function InterviewClient() {
             )}
           </div>
         </div>
-      )}
+      ) : null}
     </AppShellClient>
   );
 }
