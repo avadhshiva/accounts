@@ -7,7 +7,7 @@ import type {
 } from "./types";
 import { totalLessonCount } from "@/lib/content";
 import { normalizeCompleted } from "@/lib/learn/merge";
-import { categoryHref } from "./presentation";
+import { categoryHref, categoryPracticeHref } from "./presentation";
 
 const CATEGORY_LABELS: Record<ReadinessCategoryId, string> = {
   resume: "Resume",
@@ -197,9 +197,10 @@ function buildNextActions(categories: ReadinessCategory[]): ReadinessAction[] {
     );
     if (weakScored.length > 0) {
       const weakest = [...weakScored].sort((a, b) => (a.score ?? 0) - (b.score ?? 0))[0];
+      // Change 14: improve weak scored mocks via free Practice, not another Assess burn.
       actions.push({
         label: `Improve ${weakest.label.toLowerCase()} (score below 70)`,
-        href: categoryHref(weakest.id),
+        href: categoryPracticeHref(weakest.id) ?? categoryHref(weakest.id),
         categoryId: weakest.id,
       });
     }

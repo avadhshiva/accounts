@@ -183,6 +183,12 @@ describe("computeReadiness", () => {
     expect(result.nextActions.some((a) => a.label.toLowerCase().includes("below 70"))).toBe(
       true,
     );
+    const improve = result.nextActions.find((a) => a.label.toLowerCase().includes("below 70"));
+    expect(improve).toMatchObject({
+      categoryId: "hr",
+      href: "/interview?mode=hr&intent=practice",
+    });
+    expect(improve?.href).not.toContain("intent=assess");
   });
 
   it("prioritizes score your resume when resume is missing", () => {

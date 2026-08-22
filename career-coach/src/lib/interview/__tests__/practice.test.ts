@@ -107,8 +107,40 @@ describe("practice limit-safety contracts", () => {
     expect(src).toContain("PracticePanel");
     expect(src).toContain("HrWarmUp");
     // Practice phase mounts PracticePanel; startAssessment is only used from assess/warmup.
-    expect(src).toMatch(/function beginPractice\(\)[\s\S]*?setPhase\("practice"\)/);
-    expect(src).not.toMatch(/function beginPractice\(\)[\s\S]*?\/api\/interview\/start/);
+    expect(src).toMatch(/function beginPractice\(\) \{\s*setError\(""\);\s*setPhase\("practice"\);\s*\}/);
+    expect(src).not.toMatch(
+      /function beginPractice\(\) \{[^}]*\/api\/interview\/start/,
+    );
+  });
+
+  it("Change 14 scorecard Practice this track uses beginPractice (no start API)", async () => {
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const src = await fs.readFile(
+      path.join(process.cwd(), "src/app/interview/InterviewClient.tsx"),
+      "utf8",
+    );
+    expect(src).toContain("Practice this track");
+    const labelIdx = src.indexOf("Practice this track");
+    const onClickBlock = src.slice(Math.max(0, labelIdx - 320), labelIdx);
+    expect(onClickBlock).toContain("beginPractice()");
+    expect(onClickBlock).toContain('setIntent("practice")');
+    expect(onClickBlock).not.toContain("/api/interview/start");
+    expect(onClickBlock).not.toContain("beginAssess");
+  });
+
+  it("Change 14 ?intent=practice auto-enters practice phase without assess start", async () => {
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const src = await fs.readFile(
+      path.join(process.cwd(), "src/app/interview/InterviewClient.tsx"),
+      "utf8",
+    );
+    expect(src).toContain('intentFromUrl === "practice"');
+    expect(src).toMatch(/intentFromUrl === "practice"[\s\S]*?setPhase\("practice"\)/);
+    // Must not auto-start Assess from intent=assess.
+    expect(src).not.toMatch(/intentFromUrl === "assess"[\s\S]{0,120}beginAssess/);
+    expect(src).not.toMatch(/intentFromUrl === "assess"[\s\S]{0,120}startAssessment/);
   });
 
   it("HR warm-up is gated to hr + assess and both CTAs call startAssessment", async () => {

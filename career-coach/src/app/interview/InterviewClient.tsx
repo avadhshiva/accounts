@@ -53,6 +53,8 @@ export default function InterviewClient() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  /** Change 14: once-per-deep-link Practice auto-enter key (mode|practice). */
+  const [autoEnteredPracticeKey, setAutoEnteredPracticeKey] = useState<string | null>(null);
 
   // Sync from Change 7 deep-link URL changes while on setup (React render-time adjust).
   if (!session && phase === "setup") {
@@ -63,6 +65,18 @@ export default function InterviewClient() {
     if (intentParam !== trackedIntentParam) {
       setTrackedIntentParam(intentParam);
       setIntent(intentFromUrl);
+    }
+  }
+
+  // Change 14: ?intent=practice lands in free Practice for the selected track (no mock start).
+  // Do NOT auto-start Assess from ?intent=assess (C13 / setup confirmation preserved).
+  if (!session && phase === "setup" && intentFromUrl === "practice") {
+    const key = `${modeFromUrl}|practice`;
+    if (autoEnteredPracticeKey !== key) {
+      setAutoEnteredPracticeKey(key);
+      setIntent("practice");
+      setError("");
+      setPhase("practice");
     }
   }
 
@@ -298,7 +312,7 @@ export default function InterviewClient() {
               </div>
             ) : (
               <button
-                className="btn btn-primary mt-4 text-sm"
+                className="btn btn-ghost mt-4 text-sm"
                 onClick={() => {
                   setSession(null);
                   setPhase("setup");
@@ -327,9 +341,25 @@ export default function InterviewClient() {
                     <li key={i}>{i}</li>
                   ))}
                 </ul>
-                <Link href="/dashboard" className="btn btn-accent mt-4 inline-flex text-sm">
-                  View Placement Mission →
-                </Link>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-primary text-sm"
+                    onClick={() => {
+                      // Change 14: Assess → free same-track Practice (no interview start fetch).
+                      setSession(null);
+                      setMessage("");
+                      setError("");
+                      setIntent("practice");
+                      beginPractice();
+                    }}
+                  >
+                    Practice this track
+                  </button>
+                  <Link href="/dashboard" className="btn btn-accent text-sm inline-flex">
+                    View Placement Mission →
+                  </Link>
+                </div>
               </div>
             )}
           </div>

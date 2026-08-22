@@ -108,13 +108,28 @@ export function formatCategoryTile(category: ReadinessCategory): CategoryTilePre
   const scoreLabel = `${score}/100`;
   const tierLabel = needsWork ? "Needs work" : undefined;
 
+  // Change 14: weak/assessed tracks needing work → free same-track Practice (not another mock).
+  // Healthy assessed tiles keep Review → assess so students can still reassess deliberately.
+  if (needsWork) {
+    const practiceHref = categoryPracticeHref(category.id) ?? href;
+    return {
+      statusLabel: tierLabel ?? "Assessed",
+      scoreLabel,
+      needsWork,
+      href: practiceHref,
+      ctaLabel: "Practice →",
+      ariaLabel: `${category.label}: ${score} out of 100, needs work`,
+      isInsufficient: false,
+    };
+  }
+
   return {
     statusLabel: tierLabel ?? "Assessed",
     scoreLabel,
     needsWork,
     href,
     ctaLabel: "Review →",
-    ariaLabel: `${category.label}: ${score} out of 100${needsWork ? ", needs work" : ""}`,
+    ariaLabel: `${category.label}: ${score} out of 100`,
     isInsufficient: false,
   };
 }

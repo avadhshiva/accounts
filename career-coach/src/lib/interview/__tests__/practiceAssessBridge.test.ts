@@ -74,3 +74,21 @@ describe("Change 13 Practice → Assess bridge", () => {
     expect(categoryPracticeHref("learn")).toBeNull();
   });
 });
+
+describe("Change 14 Assess → Practice bridge", () => {
+  it.each(MODES)(
+    "%s Practice deep-link is same-track intent=practice (not assess)",
+    (mode) => {
+      expect(categoryPracticeHref(mode)).toBe(`/interview?mode=${mode}&intent=practice`);
+      expect(categoryPracticeHref(mode)).not.toContain("intent=assess");
+      expect(interviewTrackHref(mode, "practice")).toBe(
+        `/interview?mode=${mode}&intent=practice`,
+      );
+    },
+  );
+
+  it("C13 Practice → Assess entry contract remains intact", () => {
+    expect(assessEntryFromPractice("technical")).toBe("direct-start");
+    expect(assessEntryFromPractice("hr")).toBe("hr-warmup");
+  });
+});

@@ -77,7 +77,7 @@ describe("presentation helpers", () => {
     expect(tile.ctaLabel).toBe("Go to Learn");
   });
 
-  it("formatCategoryTile for complete score below 70 includes Needs work tier", () => {
+  it("formatCategoryTile for complete score below 70 routes to Practice", () => {
     const tile = formatCategoryTile(
       category({
         id: "technical",
@@ -89,6 +89,44 @@ describe("presentation helpers", () => {
     expect(tile.needsWork).toBe(true);
     expect(tile.statusLabel).toBe("Needs work");
     expect(tile.scoreLabel).toBe("65/100");
+    expect(tile.ctaLabel).toBe("Practice →");
+    expect(tile.href).toBe("/interview?mode=technical&intent=practice");
+  });
+
+  it.each([
+    ["hr", "/interview?mode=hr&intent=practice"],
+    ["technical", "/interview?mode=technical&intent=practice"],
+    ["genai", "/interview?mode=genai&intent=practice"],
+    ["aptitude", "/interview?mode=aptitude&intent=practice"],
+  ] as const)(
+    "formatCategoryTile for weak scored %s uses same-track Practice href",
+    (id, href) => {
+      const tile = formatCategoryTile(
+        category({
+          id,
+          label: `${id} mock`,
+          status: "complete",
+          score: 55,
+        }),
+      );
+      expect(tile.ctaLabel).toBe("Practice →");
+      expect(tile.href).toBe(href);
+      expect(tile.href).not.toContain("intent=assess");
+    },
+  );
+
+  it("formatCategoryTile for healthy assessed score keeps Review → assess", () => {
+    const tile = formatCategoryTile(
+      category({
+        id: "technical",
+        label: "Technical mock",
+        status: "complete",
+        score: 80,
+      }),
+    );
+    expect(tile.needsWork).toBe(false);
+    expect(tile.ctaLabel).toBe("Review →");
+    expect(tile.href).toBe("/interview?mode=technical&intent=assess");
   });
 
   it("missionProgressPercent returns 50 for 3 of 6", () => {
