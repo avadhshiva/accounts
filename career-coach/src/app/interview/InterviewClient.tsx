@@ -12,6 +12,11 @@ import {
   type InterviewIntent,
 } from "@/lib/interview/intent";
 import { parseInterviewModeParam } from "@/lib/interview/mode";
+import {
+  isSetupAssessCtaEnabled,
+  isSetupPracticeCtaEnabled,
+  setupStartIntent,
+} from "@/lib/interview/setupCta";
 import type { InterviewMode } from "@/lib/types";
 
 type Msg = { role: "coach" | "user"; content: string };
@@ -219,16 +224,23 @@ export default function InterviewClient() {
             <button
               type="button"
               className="btn btn-accent"
-              disabled={loading || intent !== "practice"}
-              onClick={beginPractice}
+              disabled={!isSetupPracticeCtaEnabled(loading)}
+              onClick={() => {
+                // CTA click decides intent (do not leave Start practice inert when Assess card is selected).
+                setIntent(setupStartIntent("start-practice"));
+                beginPractice();
+              }}
             >
               Start practice
             </button>
             <button
               type="button"
               className="btn btn-primary"
-              disabled={loading || intent !== "assess"}
-              onClick={beginAssess}
+              disabled={!isSetupAssessCtaEnabled(loading)}
+              onClick={() => {
+                setIntent(setupStartIntent("start-assess"));
+                beginAssess();
+              }}
             >
               {loading
                 ? "Starting..."

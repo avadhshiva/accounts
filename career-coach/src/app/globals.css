@@ -70,6 +70,12 @@ a {
   transform: translateY(-1px);
 }
 
+.btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  transform: none;
+}
+
 .btn-primary {
   background: var(--ink);
   color: #f8f4ec;
