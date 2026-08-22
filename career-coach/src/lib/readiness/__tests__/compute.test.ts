@@ -213,7 +213,7 @@ describe("computeReadiness", () => {
     });
     expect(result.nextActions.some((a) => a.label === "Complete HR mock interview")).toBe(true);
     expect(result.nextActions.find((a) => a.categoryId === "hr")).toMatchObject({
-      href: "/interview?mode=hr",
+      href: "/interview?mode=hr&intent=assess",
     });
   });
 
@@ -503,10 +503,10 @@ describe("nextActions", () => {
       "Complete aptitude mock interview",
     ]);
     expect(result.nextActions.slice(0, 4).map((a) => a.href)).toEqual([
-      "/interview?mode=hr",
-      "/interview?mode=technical",
-      "/interview?mode=genai",
-      "/interview?mode=aptitude",
+      "/interview?mode=hr&intent=assess",
+      "/interview?mode=technical&intent=assess",
+      "/interview?mode=genai&intent=assess",
+      "/interview?mode=aptitude&intent=assess",
     ]);
   });
 
@@ -532,7 +532,7 @@ describe("nextActions", () => {
     expect(result.nextActions.some((a) => a.href === "/practice")).toBe(false);
     expect(result.nextActions.some((a) => a.categoryId === "aptitude")).toBe(true);
     expect(result.nextActions.find((a) => a.categoryId === "aptitude")?.href).toBe(
-      "/interview?mode=aptitude",
+      "/interview?mode=aptitude&intent=assess",
     );
   });
 

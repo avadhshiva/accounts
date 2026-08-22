@@ -1,3 +1,4 @@
+import type { InterviewIntent } from "@/lib/interview/intent";
 import type { InterviewMode } from "@/lib/types";
 import type { ReadinessCategory, ReadinessCategoryId, ReadinessSnapshot } from "./types";
 
@@ -9,11 +10,23 @@ export function interviewModeForCategory(id: ReadinessCategoryId): InterviewMode
   return MOCK_CATEGORY_IDS.includes(id as InterviewMode) ? (id as InterviewMode) : null;
 }
 
+/** Mission Assess deep-link for a mock category (Change 13: explicit intent=assess). */
 export function categoryHref(id: ReadinessCategoryId): string {
   const mode = interviewModeForCategory(id);
-  if (mode) return `/interview?mode=${mode}`;
+  if (mode) return interviewTrackHref(mode, "assess");
   if (id === "resume") return "/resume";
   return "/learn";
+}
+
+/** Intentional Practice deep-link for a mock category. */
+export function categoryPracticeHref(id: ReadinessCategoryId): string | null {
+  const mode = interviewModeForCategory(id);
+  if (!mode) return null;
+  return interviewTrackHref(mode, "practice");
+}
+
+export function interviewTrackHref(mode: InterviewMode, intent: InterviewIntent): string {
+  return `/interview?mode=${mode}&intent=${intent}`;
 }
 
 export function missionProgressPercent(completedCategoryCount: number): number {

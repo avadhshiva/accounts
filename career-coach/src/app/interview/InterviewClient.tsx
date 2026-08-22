@@ -128,6 +128,11 @@ export default function InterviewClient() {
             setPhase("setup");
             setIntent(null);
           }}
+          onStartAssessment={() => {
+            // Same-track Assess via existing beginAssess (HR still opens warm-up).
+            setIntent("assess");
+            beginAssess();
+          }}
         />
       ) : null}
 

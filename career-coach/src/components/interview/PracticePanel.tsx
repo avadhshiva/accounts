@@ -8,9 +8,12 @@ import type { InterviewMode } from "@/lib/types";
 export function PracticePanel({
   mode,
   onExit,
+  onStartAssessment,
 }: {
   mode: InterviewMode;
   onExit: () => void;
+  /** Transitions into the existing Assess flow for this same mode (may open HR warm-up). */
+  onStartAssessment: () => void;
 }) {
   const label = INTERVIEW_MODES.find((m) => m.id === mode)?.label ?? mode;
   const [seen, setSeen] = useState<string[]>([]);
@@ -62,6 +65,9 @@ export function PracticePanel({
       ) : null}
 
       <div className="mt-5 flex flex-wrap gap-2">
+        <button type="button" className="btn btn-primary text-sm" onClick={onStartAssessment}>
+          Start Assessment
+        </button>
         {!hintVisible ? (
           <button
             type="button"
@@ -80,7 +86,7 @@ export function PracticePanel({
           </button>
         )}
         <button type="button" className="btn btn-accent text-sm" onClick={nextQuestion}>
-          Next question
+          Keep practicing
         </button>
         <button type="button" className="btn btn-ghost text-sm" onClick={onExit}>
           Exit practice

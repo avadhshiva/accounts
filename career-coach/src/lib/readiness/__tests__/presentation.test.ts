@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ReadinessCategory, ReadinessSnapshot } from "../types";
 import {
   categoryHref,
+  categoryPracticeHref,
   formatCategoryTile,
   formatOverallHeadline,
   gapsEmptyCopy,
@@ -106,16 +107,24 @@ describe("presentation helpers", () => {
     expect(pilotDayNumber(start.toISOString(), now, 7)).toBe(2);
   });
 
-  it("categoryHref for mock categories includes interview mode query param", () => {
-    expect(categoryHref("hr")).toBe("/interview?mode=hr");
-    expect(categoryHref("technical")).toBe("/interview?mode=technical");
-    expect(categoryHref("genai")).toBe("/interview?mode=genai");
-    expect(categoryHref("aptitude")).toBe("/interview?mode=aptitude");
+  it("categoryHref for mock categories includes mode + intent=assess", () => {
+    expect(categoryHref("hr")).toBe("/interview?mode=hr&intent=assess");
+    expect(categoryHref("technical")).toBe("/interview?mode=technical&intent=assess");
+    expect(categoryHref("genai")).toBe("/interview?mode=genai&intent=assess");
+    expect(categoryHref("aptitude")).toBe("/interview?mode=aptitude&intent=assess");
   });
 
   it("categoryHref for resume and learn omit query params", () => {
     expect(categoryHref("resume")).toBe("/resume");
     expect(categoryHref("learn")).toBe("/learn");
+  });
+
+  it("categoryPracticeHref for mock categories includes intent=practice", () => {
+    expect(categoryPracticeHref("hr")).toBe("/interview?mode=hr&intent=practice");
+    expect(categoryPracticeHref("technical")).toBe(
+      "/interview?mode=technical&intent=practice",
+    );
+    expect(categoryPracticeHref("resume")).toBeNull();
   });
 
   it("empty copy helpers return onboarding strings", () => {
