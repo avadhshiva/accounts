@@ -1,4 +1,5 @@
 import { getQuestionBank, pickQuestionSet } from "@/lib/interviewQuestions";
+import { normalizeFocusAreas } from "@/lib/interview/focus";
 import type { InterviewMode } from "@/lib/types";
 
 /** Static, mode-level coaching tips — no AI / no network. */
@@ -38,7 +39,19 @@ export function pickPracticeQuestion(
   return sampled.find((q) => pool.includes(q)) ?? pool[Math.floor(Math.random() * pool.length)];
 }
 
-export function getPracticeHint(mode: InterviewMode, questionIndex = 0): string {
+/**
+ * Prefer scorecard Focus areas as hints when present (Change 15).
+ * Falls back to static mode tips — no AI / ranking.
+ */
+export function getPracticeHint(
+  mode: InterviewMode,
+  questionIndex = 0,
+  focusAreas?: string[],
+): string {
+  const focus = normalizeFocusAreas(focusAreas);
+  if (focus.length > 0) {
+    return focus[questionIndex % focus.length];
+  }
   const hints = MODE_HINTS[mode];
   return hints[questionIndex % hints.length];
 }

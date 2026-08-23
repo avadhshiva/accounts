@@ -2,15 +2,19 @@
 
 import { useMemo, useState } from "react";
 import { INTERVIEW_MODES } from "@/lib/content";
+import { hasPracticeFocus, normalizeFocusAreas } from "@/lib/interview/focus";
 import { getPracticeHint, pickPracticeQuestion } from "@/lib/interview/practice";
 import type { InterviewMode } from "@/lib/types";
 
 export function PracticePanel({
   mode,
+  focusAreas = [],
   onExit,
   onStartAssessment,
 }: {
   mode: InterviewMode;
+  /** Change 15: scorecard improvements for this mode (empty = generic Practice). */
+  focusAreas?: string[];
   onExit: () => void;
   /** Transitions into the existing Assess flow for this same mode (may open HR warm-up). */
   onStartAssessment: () => void;
@@ -21,9 +25,12 @@ export function PracticePanel({
   const [hintVisible, setHintVisible] = useState(false);
   const [hintIndex, setHintIndex] = useState(0);
 
+  const normalizedFocus = useMemo(() => normalizeFocusAreas(focusAreas), [focusAreas]);
+  const showFocus = hasPracticeFocus(normalizedFocus);
+
   const hint = useMemo(
-    () => getPracticeHint(mode, hintIndex),
-    [mode, hintIndex],
+    () => getPracticeHint(mode, hintIndex, normalizedFocus),
+    [mode, hintIndex, normalizedFocus],
   );
 
   function nextQuestion() {
@@ -47,6 +54,22 @@ export function PracticePanel({
         Untimed · No score · No assessment attempt used. Learn and improve without
         affecting Placement Readiness.
       </p>
+
+      {showFocus ? (
+        <div className="mt-4 rounded-2xl border border-[var(--accent)]/30 bg-[var(--accent)]/5 p-4">
+          <p className="text-xs font-semibold tracking-wide text-[var(--accent)] uppercase">
+            Focus areas
+          </p>
+          <p className="mt-1 text-xs text-[var(--ink-soft)]">
+            From your latest {label} assessment — practice these next.
+          </p>
+          <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm text-[var(--ink)]">
+            {normalizedFocus.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="mt-5 rounded-2xl border border-[var(--line)] bg-white/70 p-4">
         <p className="text-xs font-semibold tracking-wide text-[var(--accent)] uppercase">

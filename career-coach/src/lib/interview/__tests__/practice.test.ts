@@ -55,6 +55,16 @@ describe("practice helpers", () => {
       expect(getPracticeHint(mode, hints.length)).toBe(hints[0]);
     }
   });
+
+  it("Change 15: prefers Focus area text as hints when provided", () => {
+    const focus = ["State time complexity", "Start with brute force"];
+    expect(getPracticeHint("technical", 0, focus)).toBe("State time complexity");
+    expect(getPracticeHint("technical", 1, focus)).toBe("Start with brute force");
+    expect(getPracticeHint("technical", 2, focus)).toBe("State time complexity");
+    // Empty / blank focus falls back to mode hints
+    expect(getPracticeHint("technical", 0, [])).toBe(listPracticeHints("technical")[0]);
+    expect(getPracticeHint("hr", 0, ["  "])).toBe(listPracticeHints("hr")[0]);
+  });
 });
 
 describe("Change 7 mode parsing remains intact with intent", () => {
@@ -83,13 +93,19 @@ describe("practice limit-safety contracts", () => {
     const root = path.join(process.cwd(), "src/app/api/interview");
     const startSrc = await fs.readFile(path.join(root, "start/route.ts"), "utf8");
     const replySrc = await fs.readFile(path.join(root, "reply/route.ts"), "utf8");
+    const focusSrc = await fs.readFile(path.join(root, "latest-focus/route.ts"), "utf8");
     expect(startSrc).toContain('incrementUsage(user.id, "mockInterviews")');
     expect(startSrc).toContain('canUse(user, "mockInterviews")');
     expect(replySrc).not.toContain("incrementUsage");
+    // Change 15 latest-focus is read-only — never creates sessions or burns mocks.
+    expect(focusSrc).toContain("export async function GET");
+    expect(focusSrc).not.toContain("incrementUsage");
+    expect(focusSrc).not.toContain("interviewRepo.create");
+    expect(focusSrc).toContain("latestCompletedImprovementsForMode");
     // Practice must not add a start-like route that increments usage.
     const entries = await fs.readdir(root, { withFileTypes: true });
     const dirs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
-    expect(dirs).toEqual(expect.arrayContaining(["start", "reply"]));
+    expect(dirs).toEqual(expect.arrayContaining(["start", "reply", "latest-focus"]));
     expect(dirs).not.toContain("practice");
   });
 
@@ -122,11 +138,42 @@ describe("practice limit-safety contracts", () => {
     );
     expect(src).toContain("Practice this track");
     const labelIdx = src.indexOf("Practice this track");
-    const onClickBlock = src.slice(Math.max(0, labelIdx - 320), labelIdx);
+    const onClickBlock = src.slice(Math.max(0, labelIdx - 520), labelIdx);
     expect(onClickBlock).toContain("beginPractice()");
     expect(onClickBlock).toContain('setIntent("practice")');
     expect(onClickBlock).not.toContain("/api/interview/start");
     expect(onClickBlock).not.toContain("beginAssess");
+    // Change 15: carry scorecard improvements into Focus before clearing session.
+    expect(onClickBlock).toContain("normalizeFocusAreas(session.scorecard?.improvements)");
+    expect(onClickBlock).toContain("setFocusAreas(nextFocus)");
+    expect(onClickBlock).toContain("setFocusForMode(session.mode)");
+  });
+
+  it("Change 15 PracticePanel receives focusAreas and deep-link can load latest-focus", async () => {
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const clientSrc = await fs.readFile(
+      path.join(process.cwd(), "src/app/interview/InterviewClient.tsx"),
+      "utf8",
+    );
+    const panelSrc = await fs.readFile(
+      path.join(process.cwd(), "src/components/interview/PracticePanel.tsx"),
+      "utf8",
+    );
+    expect(clientSrc).toContain("focusAreas={focusAreas}");
+    expect(clientSrc).toContain("/api/interview/latest-focus?mode=");
+    expect(clientSrc).toMatch(/phase !== "practice"/);
+    // Deep-link / setup Practice may fetch focus; must never use start for focus load.
+    const focusFetchIdx = clientSrc.indexOf("/api/interview/latest-focus?mode=");
+    expect(focusFetchIdx).toBeGreaterThan(-1);
+    const focusFetchWindow = clientSrc.slice(
+      Math.max(0, focusFetchIdx - 200),
+      focusFetchIdx + 120,
+    );
+    expect(focusFetchWindow).not.toContain("/api/interview/start");
+    expect(panelSrc).toContain("Focus areas");
+    expect(panelSrc).toContain("hasPracticeFocus");
+    expect(panelSrc).toContain("getPracticeHint(mode, hintIndex, normalizedFocus)");
   });
 
   it("Change 14 ?intent=practice auto-enters practice phase without assess start", async () => {

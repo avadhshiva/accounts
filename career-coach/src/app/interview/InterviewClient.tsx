@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AppShellClient } from "@/components/AppShellClient";
 import { HrWarmUp } from "@/components/interview/HrWarmUp";
 import { PracticePanel } from "@/components/interview/PracticePanel";
 import { INTERVIEW_MODES } from "@/lib/content";
+import { normalizeFocusAreas } from "@/lib/interview/focus";
 import {
   parseInterviewIntentParam,
   type InterviewIntent,
@@ -55,6 +56,10 @@ export default function InterviewClient() {
   const [error, setError] = useState("");
   /** Change 14: once-per-deep-link Practice auto-enter key (mode|practice). */
   const [autoEnteredPracticeKey, setAutoEnteredPracticeKey] = useState<string | null>(null);
+  /** Change 15: mode-specific Focus areas (scorecard improvements). */
+  const [focusAreas, setFocusAreas] = useState<string[]>([]);
+  /** Mode for which focusAreas is already resolved (including empty = generic). */
+  const [focusForMode, setFocusForMode] = useState<InterviewMode | null>(null);
 
   // Sync from Change 7 deep-link URL changes while on setup (React render-time adjust).
   if (!session && phase === "setup") {
@@ -79,6 +84,35 @@ export default function InterviewClient() {
       setPhase("practice");
     }
   }
+
+  // Change 15: when Practice has no in-memory Focus for this mode, load latest completed by mode.
+  useEffect(() => {
+    if (phase !== "practice") return;
+    if (focusForMode === mode) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/interview/latest-focus?mode=${encodeURIComponent(mode)}`);
+        const data = (await res.json()) as { improvements?: string[] };
+        if (cancelled) return;
+        if (res.ok) {
+          setFocusAreas(normalizeFocusAreas(data.improvements));
+        } else {
+          setFocusAreas([]);
+        }
+        setFocusForMode(mode);
+      } catch {
+        if (cancelled) return;
+        setFocusAreas([]);
+        setFocusForMode(mode);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [phase, mode, focusForMode]);
 
   async function startAssessment() {
     setLoading(true);
@@ -113,6 +147,11 @@ export default function InterviewClient() {
     setPhase("practice");
   }
 
+  function clearPracticeFocus() {
+    setFocusAreas([]);
+    setFocusForMode(null);
+  }
+
   async function send(finish = false) {
     if (!session || (!message.trim() && !finish)) return;
     setLoading(true);
@@ -143,9 +182,11 @@ export default function InterviewClient() {
       {phase === "practice" ? (
         <PracticePanel
           mode={mode}
+          focusAreas={focusAreas}
           onExit={() => {
             setPhase("setup");
             setIntent(null);
+            clearPracticeFocus();
           }}
           onStartAssessment={() => {
             // Same-track Assess via existing beginAssess (HR still opens warm-up).
@@ -242,6 +283,8 @@ export default function InterviewClient() {
               onClick={() => {
                 // CTA click decides intent (do not leave Start practice inert when Assess card is selected).
                 setIntent(setupStartIntent("start-practice"));
+                // Clear prior Focus so effect can load latest for the selected mode.
+                clearPracticeFocus();
                 beginPractice();
               }}
             >
@@ -346,7 +389,10 @@ export default function InterviewClient() {
                     type="button"
                     className="btn btn-primary text-sm"
                     onClick={() => {
-                      // Change 14: Assess → free same-track Practice (no interview start fetch).
+                      // Change 14/15: Assess → free same-track Practice with Focus (no interview start fetch).
+                      const nextFocus = normalizeFocusAreas(session.scorecard?.improvements);
+                      setFocusAreas(nextFocus);
+                      setFocusForMode(session.mode);
                       setSession(null);
                       setMessage("");
                       setError("");
