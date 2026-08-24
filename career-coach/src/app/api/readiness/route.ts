@@ -9,7 +9,7 @@ export async function GET() {
   }
 
   try {
-    const readiness = await getReadinessForUser(user.id);
+    const readiness = await getReadinessForUser(user.id, user);
     return NextResponse.json({ readiness });
   } catch {
     return NextResponse.json({ error: "Could not compute readiness" }, { status: 500 });

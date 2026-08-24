@@ -246,4 +246,35 @@ describe("presentation helpers", () => {
     expect(missionNextActionsEmptyFallbackCopy()).toContain("Complete assessments");
     expect(missionNextActionsEmptyFallbackCopy().toLowerCase()).not.toContain("resume");
   });
+
+  it("formatCategoryTile shows per-category attempt counts", () => {
+    const tile = formatCategoryTile(
+      category({
+        id: "aptitude",
+        label: "Aptitude & Reasoning",
+        status: "complete",
+        score: 74,
+        assessmentAttemptsUsed: 1,
+        assessmentAttemptsLimit: 2,
+      }),
+    );
+    expect(tile.attemptsLabel).toBe("1/2 attempts");
+    expect(tile.scoreLabel).toBe("74/100");
+  });
+
+  it("formatCategoryTile routes exhausted categories to practice", () => {
+    const tile = formatCategoryTile(
+      category({
+        id: "aptitude",
+        label: "Aptitude & Reasoning",
+        status: "complete",
+        score: 74,
+        assessmentAttemptsUsed: 2,
+        assessmentAttemptsLimit: 2,
+      }),
+    );
+    expect(tile.limitReached).toBe(true);
+    expect(tile.href).toBe("/interview?mode=aptitude&intent=practice");
+    expect(tile.ctaLabel).toBe("Practice →");
+  });
 });

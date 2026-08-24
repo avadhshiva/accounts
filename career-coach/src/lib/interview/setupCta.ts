@@ -16,7 +16,7 @@ export function isSetupPracticeCtaEnabled(loading: boolean): boolean {
   return !loading;
 }
 
-/** Assess CTA must remain actionable even when Practice Mode card is selected. */
-export function isSetupAssessCtaEnabled(loading: boolean): boolean {
-  return !loading;
+/** Assess CTA disabled when loading or category assessment quota is exhausted. */
+export function isSetupAssessCtaEnabled(loading: boolean, canStartAssessment = true): boolean {
+  return !loading && canStartAssessment;
 }

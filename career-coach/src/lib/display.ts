@@ -15,7 +15,7 @@ export function formatNavUsagePill(
   remainingLabel?: string,
 ) {
   const limits = getUsageLimits(user);
-  const usage = `${user.usage.resumeAnalyses}/${limits.resumeAnalyses} resumes · ${user.usage.mockInterviews}/${limits.mockInterviews} mocks`;
+  const usage = `${user.usage.resumeAnalyses}/${limits.resumeAnalyses} resume scores`;
 
   if (user.access === "trial" && user.trialStartedAt && remainingLabel && remainingLabel !== "—") {
     return `Trial ${remainingLabel} · ${usage}`;

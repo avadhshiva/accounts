@@ -15,6 +15,9 @@ export type ReadinessCategory = {
   score?: number;
   source?: string;
   assessedAt?: string;
+  /** Assessment attempts used in this category (mock interview categories only). */
+  assessmentAttemptsUsed?: number;
+  assessmentAttemptsLimit?: number;
 };
 
 export type ReadinessAction = {
@@ -54,4 +57,6 @@ export type ReadinessComputeInput = {
   /** Valid lesson slugs from persisted user_progress.learn_completed */
   learnCompleted?: string[];
   learnProgressUpdatedAt?: string;
+  /** Per-category assessment attempt cap for mock categories */
+  assessmentAttemptsLimitPerMode?: number;
 };

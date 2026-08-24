@@ -69,6 +69,14 @@ export const interviewRepoPg = {
     return res.rows.map(rowToInterview);
   },
 
+  async countByUserIdAndMode(userId: string, mode: InterviewSession["mode"]): Promise<number> {
+    const res = await query(
+      `SELECT COUNT(*)::int AS count FROM interviews WHERE user_id = $1 AND mode = $2`,
+      [userId, mode],
+    );
+    return Number(res.rows[0]?.count ?? 0);
+  },
+
   async upsertFromImport(session: InterviewSession): Promise<void> {
     await query(
       `INSERT INTO interviews (

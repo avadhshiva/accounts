@@ -42,8 +42,10 @@ export function MissionStatusStrip({
       )}
 
       <p className="mt-2 text-sm text-[var(--ink-soft)]">
-        {user.usage.resumeAnalyses}/{limits.resumeAnalyses} resume scores ·{" "}
-        {user.usage.mockInterviews}/{limits.mockInterviews} mock interviews
+        {user.usage.resumeAnalyses}/{limits.resumeAnalyses} resume scores
+      </p>
+      <p className="mt-1 text-xs text-[var(--ink-soft)]">
+        Assessment attempts are tracked per category below (2 per track during pilot).
       </p>
 
       <div className="mt-5">

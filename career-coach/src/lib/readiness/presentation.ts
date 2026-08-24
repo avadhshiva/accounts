@@ -1,6 +1,7 @@
 import type { InterviewIntent } from "@/lib/interview/intent";
 import type { InterviewMode } from "@/lib/types";
 import type { ReadinessCategory, ReadinessCategoryId, ReadinessSnapshot } from "./types";
+import { formatAssessmentAttemptsLabel } from "@/lib/assessmentQuota";
 
 export const MISSION_CATEGORY_COUNT = 6;
 
@@ -79,6 +80,8 @@ export function formatOverallHeadline(readiness: ReadinessSnapshot): OverallHead
 export type CategoryTilePresentation = {
   statusLabel: string;
   scoreLabel?: string;
+  attemptsLabel?: string;
+  limitReached?: boolean;
   needsWork: boolean;
   href: string;
   ctaLabel: string;
@@ -86,15 +89,30 @@ export type CategoryTilePresentation = {
   isInsufficient: boolean;
 };
 
+function assessmentAttemptsMeta(category: ReadinessCategory) {
+  if (category.assessmentAttemptsLimit === undefined) return null;
+  const used = category.assessmentAttemptsUsed ?? 0;
+  const limit = category.assessmentAttemptsLimit;
+  return {
+    used,
+    limit,
+    label: formatAssessmentAttemptsLabel(used, limit),
+    exhausted: used >= limit,
+  };
+}
+
 export function formatCategoryTile(category: ReadinessCategory): CategoryTilePresentation {
   const href = categoryHref(category.id);
   const isInsufficient = category.status === "insufficient_data";
+  const attempts = assessmentAttemptsMeta(category);
+  const practiceHref = categoryPracticeHref(category.id) ?? href;
 
   if (isInsufficient) {
     const statusLabel =
       category.id === "learn" ? "Progress not tracked yet" : "Not assessed yet";
     return {
       statusLabel,
+      attemptsLabel: attempts?.label,
       needsWork: false,
       href,
       ctaLabel: category.id === "learn" ? "Go to Learn" : "Assess →",
@@ -108,13 +126,27 @@ export function formatCategoryTile(category: ReadinessCategory): CategoryTilePre
   const scoreLabel = `${score}/100`;
   const tierLabel = needsWork ? "Needs work" : undefined;
 
-  // Change 14: weak/assessed tracks needing work → free same-track Practice (not another mock).
-  // Healthy assessed tiles keep Review → assess so students can still reassess deliberately.
-  if (needsWork) {
-    const practiceHref = categoryPracticeHref(category.id) ?? href;
+  if (attempts?.exhausted) {
     return {
       statusLabel: tierLabel ?? "Assessed",
       scoreLabel,
+      attemptsLabel: attempts.label,
+      limitReached: true,
+      needsWork,
+      href: practiceHref,
+      ctaLabel: "Practice →",
+      ariaLabel: `${category.label}: ${score} out of 100, assessment limit reached`,
+      isInsufficient: false,
+    };
+  }
+
+  // Change 14: weak/assessed tracks needing work → free same-track Practice (not another mock).
+  // Healthy assessed tiles keep Review → assess so students can still reassess deliberately.
+  if (needsWork) {
+    return {
+      statusLabel: tierLabel ?? "Assessed",
+      scoreLabel,
+      attemptsLabel: attempts?.label,
       needsWork,
       href: practiceHref,
       ctaLabel: "Practice →",
@@ -126,6 +158,7 @@ export function formatCategoryTile(category: ReadinessCategory): CategoryTilePre
   return {
     statusLabel: tierLabel ?? "Assessed",
     scoreLabel,
+    attemptsLabel: attempts?.label,
     needsWork,
     href,
     ctaLabel: "Review →",

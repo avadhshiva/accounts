@@ -22,7 +22,7 @@ export default async function DashboardPage() {
   let readiness = null;
 
   try {
-    readiness = await getReadinessForUser(user.id);
+    readiness = await getReadinessForUser(user.id, user);
   } catch {
     readinessError = true;
   }
@@ -33,7 +33,7 @@ export default async function DashboardPage() {
   const firstName = user.name.split(" ")[0];
 
   return (
-    <AppShell title={`${firstName} · Placement Mission HQ`}>
+    <AppShell title={`${firstName} · Placement Mission`}>
       {readinessError ? (
         <div
           className="mb-6 rounded-2xl border border-[var(--accent-2)]/30 bg-white/80 p-4 text-sm text-[var(--ink-soft)]"

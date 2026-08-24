@@ -60,6 +60,11 @@ export default function InterviewClient() {
   const [focusAreas, setFocusAreas] = useState<string[]>([]);
   /** Mode for which focusAreas is already resolved (including empty = generic). */
   const [focusForMode, setFocusForMode] = useState<InterviewMode | null>(null);
+  const [assessQuota, setAssessQuota] = useState<{
+    used: number;
+    limit: number;
+    canStart: boolean;
+  } | null>(null);
 
   // Sync from Change 7 deep-link URL changes while on setup (React render-time adjust).
   if (!session && phase === "setup") {
@@ -113,6 +118,41 @@ export default function InterviewClient() {
       cancelled = true;
     };
   }, [phase, mode, focusForMode]);
+
+  // Per-category assessment quota for setup screen (practice does not consume attempts).
+  useEffect(() => {
+    if (phase !== "setup") return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/interview/assessment-quota?mode=${encodeURIComponent(mode)}`,
+        );
+        const data = (await res.json()) as {
+          used?: number;
+          limit?: number;
+          canStart?: boolean;
+        };
+        if (cancelled) return;
+        if (res.ok) {
+          setAssessQuota({
+            used: data.used ?? 0,
+            limit: data.limit ?? 2,
+            canStart: Boolean(data.canStart),
+          });
+        } else {
+          setAssessQuota(null);
+        }
+      } catch {
+        if (!cancelled) setAssessQuota(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [phase, mode]);
 
   async function startAssessment() {
     setLoading(true);
@@ -248,7 +288,7 @@ export default function InterviewClient() {
             >
               <p className="font-semibold">Practice Mode</p>
               <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                Untimed · Hints · No score · No limit used
+                Untimed · Hints · No score · No assessment attempt used
               </p>
               <p className="mt-2 text-xs text-[var(--ink-soft)]">
                 Practice without using an assessment attempt.
@@ -258,20 +298,27 @@ export default function InterviewClient() {
               type="button"
               className={`rounded-2xl border p-4 text-left transition ${
                 intent === "assess"
-                  ? "border-[var(--accent)] bg-[var(--accent)]/10"
-                  : "border-[var(--line)] bg-white/70 hover:border-[var(--accent)]/40"
+                  ? "border-[var(--ink)] bg-[#e8eef4]/90"
+                  : "border-[var(--line)] bg-white/70 hover:border-[var(--ink)]/30"
               }`}
               onClick={() => setIntent("assess")}
             >
               <p className="font-semibold">Assess Mode</p>
               <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                Scored · Counts toward readiness · Uses one mock attempt
+                Scored · Counts toward readiness · Uses one assessment attempt
               </p>
               <p className="mt-2 text-xs text-[var(--ink-soft)]">
                 Take a scored assessment that contributes to your readiness.
               </p>
             </button>
           </div>
+
+          {assessQuota && !assessQuota.canStart ? (
+            <p className="mt-3 text-sm text-[var(--ink-soft)]">
+              Assessment limit reached — {assessQuota.used}/{assessQuota.limit} attempts used.
+              Practice is still unlimited for this track.
+            </p>
+          ) : null}
 
           {error ? <p className="mt-3 text-sm text-[var(--accent-2)]">{error}</p> : null}
 
@@ -293,7 +340,7 @@ export default function InterviewClient() {
             <button
               type="button"
               className="btn btn-primary"
-              disabled={!isSetupAssessCtaEnabled(loading)}
+              disabled={!isSetupAssessCtaEnabled(loading, assessQuota?.canStart ?? true)}
               onClick={() => {
                 setIntent(setupStartIntent("start-assess"));
                 beginAssess();
@@ -303,7 +350,7 @@ export default function InterviewClient() {
                 ? "Starting..."
                 : mode === "hr"
                   ? "Continue to HR Assessment"
-                  : "Start interview"}
+                  : "Start assessment"}
             </button>
           </div>
         </div>

@@ -87,15 +87,18 @@ describe("practice limit-safety contracts", () => {
     );
   });
 
-  it("assessment start route remains the only mockInterview increment path among interview APIs", async () => {
+  it("assessment start route uses per-category quota (not global mock counter)", async () => {
     const fs = await import("node:fs/promises");
     const path = await import("node:path");
     const root = path.join(process.cwd(), "src/app/api/interview");
     const startSrc = await fs.readFile(path.join(root, "start/route.ts"), "utf8");
     const replySrc = await fs.readFile(path.join(root, "reply/route.ts"), "utf8");
     const focusSrc = await fs.readFile(path.join(root, "latest-focus/route.ts"), "utf8");
-    expect(startSrc).toContain('incrementUsage(user.id, "mockInterviews")');
-    expect(startSrc).toContain('canUse(user, "mockInterviews")');
+    const quotaSrc = await fs.readFile(path.join(root, "assessment-quota/route.ts"), "utf8");
+    expect(startSrc).toContain("canStartAssessmentForMode");
+    expect(startSrc).not.toContain("incrementUsage");
+    expect(startSrc).not.toContain('canUse(user, "mockInterviews")');
+    expect(quotaSrc).toContain("countAssessmentAttemptsForMode");
     expect(replySrc).not.toContain("incrementUsage");
     // Change 15 latest-focus is read-only — never creates sessions or burns mocks.
     expect(focusSrc).toContain("export async function GET");
@@ -105,7 +108,9 @@ describe("practice limit-safety contracts", () => {
     // Practice must not add a start-like route that increments usage.
     const entries = await fs.readdir(root, { withFileTypes: true });
     const dirs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
-    expect(dirs).toEqual(expect.arrayContaining(["start", "reply", "latest-focus"]));
+    expect(dirs).toEqual(
+      expect.arrayContaining(["start", "reply", "latest-focus", "assessment-quota"]),
+    );
     expect(dirs).not.toContain("practice");
   });
 
