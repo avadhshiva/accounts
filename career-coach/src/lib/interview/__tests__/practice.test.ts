@@ -195,6 +195,39 @@ describe("practice limit-safety contracts", () => {
     expect(src).not.toMatch(/intentFromUrl === "assess"[\s\S]{0,120}startAssessment/);
   });
 
+  it("InterviewClient guards duplicate startAssessment while loading", async () => {
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const src = await fs.readFile(
+      path.join(process.cwd(), "src/app/interview/InterviewClient.tsx"),
+      "utf8",
+    );
+    expect(src).toMatch(/async function startAssessment\(\) \{\s*if \(loading\) return;/);
+    expect(src).toContain("Starting interview...");
+  });
+
+  it("start route uses category-specific quota error message", async () => {
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const startSrc = await fs.readFile(
+      path.join(process.cwd(), "src/app/api/interview/start/route.ts"),
+      "utf8",
+    );
+    expect(startSrc).toContain("formatCategoryQuotaErrorMessage");
+    expect(startSrc).not.toContain("Trial mock interview limit reached");
+  });
+
+  it("Placement Mission HQ does not appear in dashboard title", async () => {
+    const fs = await import("node:fs/promises");
+    const path = await import("node:path");
+    const dashboard = await fs.readFile(
+      path.join(process.cwd(), "src/app/dashboard/page.tsx"),
+      "utf8",
+    );
+    expect(dashboard).not.toContain("Placement Mission HQ");
+    expect(dashboard).toContain("Placement Mission");
+  });
+
   it("HR warm-up is gated to hr + assess and both CTAs call startAssessment", async () => {
     const fs = await import("node:fs/promises");
     const path = await import("node:path");

@@ -258,7 +258,7 @@ describe("presentation helpers", () => {
         assessmentAttemptsLimit: 2,
       }),
     );
-    expect(tile.attemptsLabel).toBe("1/2 attempts");
+    expect(tile.attemptsLabel).toBe("1/2 sessions used");
     expect(tile.scoreLabel).toBe("74/100");
   });
 

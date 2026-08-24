@@ -1,4 +1,8 @@
 import type { User } from "./types";
+import {
+  formatMockSessionsHeaderLabel,
+  getTotalMockSessionsLimit,
+} from "./assessmentQuota";
 import { getUsageLimits } from "./limits";
 
 export function getPlanDisplayLabel(user: Pick<User, "plan" | "access" | "trialStartedAt">) {
@@ -13,9 +17,12 @@ export function getPlanDisplayLabel(user: Pick<User, "plan" | "access" | "trialS
 export function formatNavUsagePill(
   user: Pick<User, "plan" | "access" | "usage" | "trialStartedAt">,
   remainingLabel?: string,
+  mockSessions?: { used: number; total: number },
 ) {
   const limits = getUsageLimits(user);
-  const usage = `${user.usage.resumeAnalyses}/${limits.resumeAnalyses} resume scores`;
+  const totalMocks = mockSessions?.total ?? getTotalMockSessionsLimit(user);
+  const usedMocks = Math.min(mockSessions?.used ?? 0, totalMocks);
+  const usage = `${user.usage.resumeAnalyses}/${limits.resumeAnalyses} resume scores · ${formatMockSessionsHeaderLabel(usedMocks, totalMocks)}`;
 
   if (user.access === "trial" && user.trialStartedAt && remainingLabel && remainingLabel !== "—") {
     return `Trial ${remainingLabel} · ${usage}`;

@@ -19,6 +19,10 @@ import {
   setupStartIntent,
 } from "@/lib/interview/setupCta";
 import type { InterviewMode } from "@/lib/types";
+import {
+  formatCategoryQuotaErrorMessage,
+  formatSessionUsageLabel,
+} from "@/lib/assessmentQuota";
 
 type Msg = { role: "coach" | "user"; content: string };
 type Session = {
@@ -155,6 +159,7 @@ export default function InterviewClient() {
   }, [phase, mode]);
 
   async function startAssessment() {
+    if (loading) return;
     setLoading(true);
     setError("");
     const res = await fetch("/api/interview/start", {
@@ -163,14 +168,25 @@ export default function InterviewClient() {
       body: JSON.stringify({ mode }),
     });
     const data = await res.json();
-    setLoading(false);
     if (!res.ok) {
+      setLoading(false);
       setError(data.error || "Could not start");
       setPhase("setup");
+      if (res.status === 402) {
+        setAssessQuota((prev) =>
+          prev
+            ? { ...prev, canStart: false, used: prev.limit }
+            : { used: 2, limit: 2, canStart: false },
+        );
+      }
       return;
     }
     setSession(data.session);
     setPhase("session");
+    setLoading(false);
+    setAssessQuota((prev) =>
+      prev ? { ...prev, used: prev.used + 1, canStart: prev.used + 1 < prev.limit } : prev,
+    );
   }
 
   function beginAssess() {
@@ -270,9 +286,16 @@ export default function InterviewClient() {
             ))}
           </div>
           {selected ? (
-            <p className="mt-4 text-sm text-[var(--ink-soft)]">
-              Selected: <span className="font-semibold text-[var(--ink)]">{selected.label}</span>
-            </p>
+            <div className="mt-4">
+              <p className="text-sm text-[var(--ink-soft)]">
+                Selected: <span className="font-semibold text-[var(--ink)]">{selected.label}</span>
+              </p>
+              {assessQuota ? (
+                <p className="mt-1 text-xs tabular-nums text-[var(--ink-soft)]">
+                  {formatSessionUsageLabel(assessQuota.used, assessQuota.limit)}
+                </p>
+              ) : null}
+            </div>
           ) : null}
 
           <p className="mt-6 text-sm font-semibold">How do you want to prepare?</p>
@@ -288,10 +311,10 @@ export default function InterviewClient() {
             >
               <p className="font-semibold">Practice Mode</p>
               <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                Untimed · Hints · No score · No assessment attempt used
+                Untimed · Hints · No score · No mock session used
               </p>
               <p className="mt-2 text-xs text-[var(--ink-soft)]">
-                Practice without using an assessment attempt.
+                Practice without using a scored mock session.
               </p>
             </button>
             <button
@@ -305,7 +328,7 @@ export default function InterviewClient() {
             >
               <p className="font-semibold">Assess Mode</p>
               <p className="mt-1 text-xs text-[var(--ink-soft)]">
-                Scored · Counts toward readiness · Uses one assessment attempt
+                Scored · Counts toward readiness · Uses one mock session
               </p>
               <p className="mt-2 text-xs text-[var(--ink-soft)]">
                 Take a scored assessment that contributes to your readiness.
@@ -315,8 +338,8 @@ export default function InterviewClient() {
 
           {assessQuota && !assessQuota.canStart ? (
             <p className="mt-3 text-sm text-[var(--ink-soft)]">
-              Assessment limit reached — {assessQuota.used}/{assessQuota.limit} attempts used.
-              Practice is still unlimited for this track.
+              {formatCategoryQuotaErrorMessage(mode, assessQuota.limit)} Practice is still unlimited
+              for this track.
             </p>
           ) : null}
 
@@ -347,10 +370,10 @@ export default function InterviewClient() {
               }}
             >
               {loading
-                ? "Starting..."
+                ? "Starting interview..."
                 : mode === "hr"
                   ? "Continue to HR Assessment"
-                  : "Start assessment"}
+                  : "Start interview"}
             </button>
           </div>
         </div>

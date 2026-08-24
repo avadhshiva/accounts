@@ -3,6 +3,11 @@ import { redirect } from "next/navigation";
 import { getSessionUser, destroySession } from "@/lib/auth";
 import { APP_NAME } from "@/lib/brand";
 import { getAccessSnapshot } from "@/lib/access";
+import {
+  countTotalMockSessionsUsed,
+  getTotalMockSessionsLimit,
+} from "@/lib/assessmentQuota";
+import { interviewRepo } from "@/lib/db";
 import { formatNavUsagePill } from "@/lib/display";
 
 const links = [
@@ -31,7 +36,12 @@ export async function AppShell({
   const access = getAccessSnapshot(user);
   if (!access.allowed) redirect("/unlock");
 
-  const usagePill = formatNavUsagePill(user, access.remainingLabel);
+  const interviews = await interviewRepo.listByUserId(user.id, 100);
+  const mockSessions = {
+    used: countTotalMockSessionsUsed(interviews),
+    total: getTotalMockSessionsLimit(user),
+  };
+  const usagePill = formatNavUsagePill(user, access.remainingLabel, mockSessions);
 
   return (
     <div className="min-h-screen">

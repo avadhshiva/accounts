@@ -1,6 +1,10 @@
 import type { AccessSnapshot } from "@/lib/access";
 import type { User } from "@/lib/types";
 import {
+  formatMockSessionsHeaderLabel,
+  getTotalMockSessionsLimit,
+} from "@/lib/assessmentQuota";
+import {
   MISSION_CATEGORY_COUNT,
   missionProgressPercent,
   pilotDayNumber,
@@ -11,12 +15,15 @@ export function MissionStatusStrip({
   user,
   access,
   completedCategoryCount,
+  mockSessionsUsed,
 }: {
   user: User;
   access: AccessSnapshot;
   completedCategoryCount: number;
+  mockSessionsUsed: number;
 }) {
   const limits = getUsageLimits(user);
+  const mockTotal = getTotalMockSessionsLimit(user);
   const trialDays = Math.round(access.trialHours / 24) || 7;
   const progressPercent = missionProgressPercent(completedCategoryCount);
   const pilotDay = pilotDayNumber(access.trialStartedAt, new Date(), trialDays);
@@ -42,10 +49,11 @@ export function MissionStatusStrip({
       )}
 
       <p className="mt-2 text-sm text-[var(--ink-soft)]">
-        {user.usage.resumeAnalyses}/{limits.resumeAnalyses} resume scores
+        {user.usage.resumeAnalyses}/{limits.resumeAnalyses} resume scores ·{" "}
+        {formatMockSessionsHeaderLabel(mockSessionsUsed, mockTotal)}
       </p>
       <p className="mt-1 text-xs text-[var(--ink-soft)]">
-        Assessment attempts are tracked per category below (2 per track during pilot).
+        Each mock category allows 2 scored sessions (8 total during pilot).
       </p>
 
       <div className="mt-5">

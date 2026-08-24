@@ -1,7 +1,7 @@
 import type { InterviewIntent } from "@/lib/interview/intent";
 import type { InterviewMode } from "@/lib/types";
 import type { ReadinessCategory, ReadinessCategoryId, ReadinessSnapshot } from "./types";
-import { formatAssessmentAttemptsLabel } from "@/lib/assessmentQuota";
+import { formatSessionUsageLabel } from "@/lib/assessmentQuota";
 
 export const MISSION_CATEGORY_COUNT = 6;
 
@@ -96,7 +96,7 @@ function assessmentAttemptsMeta(category: ReadinessCategory) {
   return {
     used,
     limit,
-    label: formatAssessmentAttemptsLabel(used, limit),
+    label: formatSessionUsageLabel(used, limit),
     exhausted: used >= limit,
   };
 }

@@ -5,6 +5,7 @@ import { interviewReply } from "@/lib/ai";
 import { interviewRepo } from "@/lib/db";
 import {
   canStartAssessmentForMode,
+  formatCategoryQuotaErrorMessage,
   getAssessmentAttemptsLimitPerMode,
 } from "@/lib/assessmentQuota";
 import { pickQuestionSet } from "@/lib/interviewQuestions";
@@ -22,11 +23,11 @@ export async function POST(req: Request) {
   try {
     const body = schema.parse(await req.json());
     const interviews = await interviewRepo.listByUserId(user.id, 100);
+    const limit = getAssessmentAttemptsLimitPerMode(user);
     if (!canStartAssessmentForMode(user, body.mode, interviews)) {
-      const limit = getAssessmentAttemptsLimitPerMode(user);
       return NextResponse.json(
         {
-          error: `Assessment limit reached for this category (${limit}/${limit} attempts used). Continue practicing or try another category.`,
+          error: formatCategoryQuotaErrorMessage(body.mode, limit),
           code: "LIMIT",
         },
         { status: 402 },
