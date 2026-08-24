@@ -1,0 +1,11 @@
+{
+  "name": "Pathly Career Coach",
+  "install": "bash .cursor/scripts/cloud-agent-install.sh",
+  "terminals": [
+    {
+      "name": "dev",
+      "command": "cd career-coach && npm run dev"
+    }
+  ],
+  "ports": [3000]
+}
