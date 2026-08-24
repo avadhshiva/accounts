@@ -1,4 +1,5 @@
-import type { InterviewSession, ResumeAnalysis } from "../types";
+import type { InterviewSession, ResumeAnalysis, User } from "../types";
+import { getAssessmentAttemptsLimitPerMode } from "../assessmentQuota";
 import { interviewRepo, progressRepo, resumeRepo } from "../db";
 import { computeReadiness } from "./compute";
 import type { ReadinessSnapshot } from "./types";
@@ -27,7 +28,10 @@ function toInterviewInput(interviews: InterviewSession[]) {
   }));
 }
 
-export async function getReadinessForUser(userId: string): Promise<ReadinessSnapshot> {
+export async function getReadinessForUser(
+  userId: string,
+  user: Pick<User, "plan" | "access">,
+): Promise<ReadinessSnapshot> {
   const resumes = await resumeRepo.listByUserId(userId, 50);
   const interviews = await interviewRepo.listByUserId(userId, 50);
   const progress = await progressRepo.getByUserId(userId);
@@ -36,6 +40,7 @@ export async function getReadinessForUser(userId: string): Promise<ReadinessSnap
     interviews: toInterviewInput(interviews),
     learnCompleted: progress.learnCompleted,
     learnProgressUpdatedAt: progress.updatedAt,
+    assessmentAttemptsLimitPerMode: getAssessmentAttemptsLimitPerMode(user),
   });
 }
 

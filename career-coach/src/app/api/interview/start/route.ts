@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import { interviewReply } from "@/lib/ai";
-import { interviewRepo, userRepo } from "@/lib/db";
+import { interviewRepo } from "@/lib/db";
+import {
+  canStartAssessmentForMode,
+  formatCategoryQuotaErrorMessage,
+  getAssessmentAttemptsLimitPerMode,
+} from "@/lib/assessmentQuota";
 import { pickQuestionSet } from "@/lib/interviewQuestions";
-import { canUse } from "@/lib/limits";
 import { assertFeatureAccess } from "@/lib/guard";
 
 const schema = z.object({
@@ -18,16 +22,20 @@ export async function POST(req: Request) {
 
   try {
     const body = schema.parse(await req.json());
-    if (!canUse(user, "mockInterviews")) {
+    const interviews = await interviewRepo.listByUserId(user.id, 100);
+    const limit = getAssessmentAttemptsLimitPerMode(user);
+    if (!canStartAssessmentForMode(user, body.mode, interviews)) {
       return NextResponse.json(
-        { error: "Trial mock interview limit reached (2 sessions). Share feedback or contact us to extend.", code: "LIMIT" },
+        {
+          error: formatCategoryQuotaErrorMessage(body.mode, limit),
+          code: "LIMIT",
+        },
         { status: 402 },
       );
     }
 
     const questionSet = pickQuestionSet(body.mode);
     const first = await interviewReply({ mode: body.mode, history: [], questionSet });
-    await userRepo.incrementUsage(user.id, "mockInterviews");
 
     const session = await interviewRepo.create({
       id: randomUUID(),

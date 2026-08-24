@@ -29,6 +29,11 @@ export const interviewRepoJson = {
     return db.interviews.filter((i) => i.userId === userId).slice(0, limit);
   },
 
+  async countByUserIdAndMode(userId: string, mode: InterviewSession["mode"]): Promise<number> {
+    const db = await readDb();
+    return db.interviews.filter((i) => i.userId === userId && i.mode === mode).length;
+  },
+
   async upsertFromImport(session: InterviewSession): Promise<void> {
     await updateDb((db) => {
       if (!db.interviews.some((i) => i.id === session.id)) {

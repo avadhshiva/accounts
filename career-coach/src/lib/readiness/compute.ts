@@ -6,15 +6,16 @@ import type {
   ReadinessSnapshot,
 } from "./types";
 import { totalLessonCount } from "@/lib/content";
+import { countAssessmentAttemptsForMode } from "@/lib/assessmentQuota";
 import { normalizeCompleted } from "@/lib/learn/merge";
 import { categoryHref, categoryPracticeHref } from "./presentation";
 
 const CATEGORY_LABELS: Record<ReadinessCategoryId, string> = {
   resume: "Resume",
-  hr: "HR mock",
-  technical: "Technical mock",
-  genai: "GenAI mock",
-  aptitude: "Aptitude mock",
+  hr: "HR Behavioural",
+  technical: "Technical / Coding",
+  genai: "GenAI Concepts",
+  aptitude: "Aptitude & Reasoning",
   learn: "Learn progress",
 };
 
@@ -107,7 +108,15 @@ function buildInterviewCategory(
   id: ReadinessCategoryId,
   mode: "hr" | "technical" | "genai" | "aptitude",
   interviews: ReadinessComputeInput["interviews"],
+  assessmentAttemptsLimit?: number,
 ): ReadinessCategory {
+  const attemptsUsed = countAssessmentAttemptsForMode(interviews, mode);
+  const attemptsLimit = assessmentAttemptsLimit;
+  const attemptFields =
+    attemptsLimit !== undefined
+      ? { assessmentAttemptsUsed: attemptsUsed, assessmentAttemptsLimit: attemptsLimit }
+      : {};
+
   const completedWithScorecard = interviews.filter(
     (i) => i.mode === mode && i.status === "completed" && i.scorecard,
   );
@@ -117,6 +126,7 @@ function buildInterviewCategory(
       id,
       label: CATEGORY_LABELS[id],
       status: "insufficient_data",
+      ...attemptFields,
     };
   }
   return {
@@ -126,6 +136,7 @@ function buildInterviewCategory(
     score: clampScore(latest.scorecard.overall),
     source: `interview:${mode}`,
     assessedAt: latest.createdAt,
+    ...attemptFields,
   };
 }
 
@@ -212,13 +223,14 @@ function buildNextActions(categories: ReadinessCategory[]): ReadinessAction[] {
 export function computeReadiness(input: ReadinessComputeInput, now = new Date()): ReadinessSnapshot {
   const latestResume = latestByCreatedAt(input.resumes);
   const learnCompleted = input.learnCompleted ?? [];
+  const assessmentLimit = input.assessmentAttemptsLimitPerMode;
 
   const categories: ReadinessCategory[] = [
     buildResumeCategory(latestResume),
-    buildInterviewCategory("hr", "hr", input.interviews),
-    buildInterviewCategory("technical", "technical", input.interviews),
-    buildInterviewCategory("genai", "genai", input.interviews),
-    buildInterviewCategory("aptitude", "aptitude", input.interviews),
+    buildInterviewCategory("hr", "hr", input.interviews, assessmentLimit),
+    buildInterviewCategory("technical", "technical", input.interviews, assessmentLimit),
+    buildInterviewCategory("genai", "genai", input.interviews, assessmentLimit),
+    buildInterviewCategory("aptitude", "aptitude", input.interviews, assessmentLimit),
     buildLearnCategory(learnCompleted, input.learnProgressUpdatedAt),
   ];
 

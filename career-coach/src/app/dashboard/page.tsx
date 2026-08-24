@@ -3,6 +3,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getAccessSnapshot } from "@/lib/access";
 import { redirect } from "next/navigation";
 import { getReadinessForUser } from "@/lib/readiness";
+import { countTotalMockSessionsUsed } from "@/lib/assessmentQuota";
 import { interviewRepo, resumeRepo } from "@/lib/db";
 import { PlacementReadinessHero } from "@/components/readiness/PlacementReadinessHero";
 import { MissionStatusStrip } from "@/components/readiness/MissionStatusStrip";
@@ -22,18 +23,19 @@ export default async function DashboardPage() {
   let readiness = null;
 
   try {
-    readiness = await getReadinessForUser(user.id);
+    readiness = await getReadinessForUser(user.id, user);
   } catch {
     readinessError = true;
   }
 
   const resumes = await resumeRepo.listByUserId(user.id, 3);
-  const interviews = await interviewRepo.listByUserId(user.id, 3);
+  const interviews = await interviewRepo.listByUserId(user.id, 100);
+  const mockSessionsUsed = countTotalMockSessionsUsed(interviews);
 
   const firstName = user.name.split(" ")[0];
 
   return (
-    <AppShell title={`${firstName} · Placement Mission HQ`}>
+    <AppShell title={`${firstName} · Placement Mission`}>
       {readinessError ? (
         <div
           className="mb-6 rounded-2xl border border-[var(--accent-2)]/30 bg-white/80 p-4 text-sm text-[var(--ink-soft)]"
@@ -54,6 +56,7 @@ export default async function DashboardPage() {
               user={user}
               access={access}
               completedCategoryCount={readiness.completedCategoryCount}
+              mockSessionsUsed={mockSessionsUsed}
             />
           </div>
 
@@ -76,7 +79,7 @@ export default async function DashboardPage() {
         </>
       ) : null}
 
-      <RecentAssessments resumes={resumes} interviews={interviews} />
+      <RecentAssessments resumes={resumes} interviews={interviews.slice(0, 3)} />
     </AppShell>
   );
 }

@@ -50,7 +50,9 @@ export function AppShellClient({
         const data = await r.json();
         setUser(data.user);
         setAccess(data.access);
-        setUsagePill(formatNavUsagePill(data.user, data.access?.remainingLabel));
+        setUsagePill(
+          formatNavUsagePill(data.user, data.access?.remainingLabel, data.mockSessions),
+        );
         setReady(true);
         if (!data.access?.allowed) {
           router.replace("/unlock");
@@ -66,7 +68,10 @@ export function AppShellClient({
               }
               const remainingLabel = formatRemaining(remainingMs);
               setUser((u) => {
-                if (u) setUsagePill(formatNavUsagePill(u, remainingLabel));
+                if (u)
+                  setUsagePill(
+                    formatNavUsagePill(u, remainingLabel, data.mockSessions),
+                  );
                 return u;
               });
               return {

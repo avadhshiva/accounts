@@ -51,7 +51,17 @@ export function CategoryBreakdown({ categories }: { categories: ReadinessCategor
                     {tile.statusLabel}
                   </p>
                 ) : null}
-                {assessed ? (
+                {tile.attemptsLabel ? (
+                  <p className="mt-1 text-xs text-[var(--ink-soft)] tabular-nums">
+                    {tile.attemptsLabel}
+                  </p>
+                ) : null}
+                {tile.limitReached ? (
+                  <p className="mt-1 text-xs font-medium text-[var(--ink-soft)]">
+                    Assessment limit reached
+                  </p>
+                ) : null}
+                {assessed && !tile.limitReached ? (
                   <p className="mt-1 text-xs text-[var(--ink-soft)]">Assessed {assessed}</p>
                 ) : null}
                 <span className="mt-3 text-xs font-semibold text-[var(--accent)]">

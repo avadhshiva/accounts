@@ -20,8 +20,9 @@ describe("setup Start practice / Start interview CTA contract", () => {
     expect(isSetupPracticeCtaEnabled(true)).toBe(false);
   });
 
-  it("Start interview remains enabled when not loading (not gated on practice card)", () => {
-    expect(isSetupAssessCtaEnabled(false)).toBe(true);
-    expect(isSetupAssessCtaEnabled(true)).toBe(false);
+  it("Start interview remains enabled when not loading and quota allows", () => {
+    expect(isSetupAssessCtaEnabled(false, true)).toBe(true);
+    expect(isSetupAssessCtaEnabled(false, false)).toBe(false);
+    expect(isSetupAssessCtaEnabled(true, true)).toBe(false);
   });
 });
