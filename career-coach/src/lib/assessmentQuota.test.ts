@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   canStartAssessmentForMode,
   countAssessmentAttemptsForMode,
-  getAssessmentAttemptsLimitPerMode,
   isAssessmentExhaustedForMode,
 } from "./assessmentQuota";
 import type { InterviewMode, User } from "./types";
