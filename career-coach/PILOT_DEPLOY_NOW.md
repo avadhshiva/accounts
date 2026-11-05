@@ -27,7 +27,7 @@
 
 | Variable | Value |
 |----------|--------|
-| `AUTH_SECRET` | Any long random string (32+ chars) e.g. `pathly-pilot-secret-aug2026-xyz123` |
+| `AUTH_SECRET` | Required. Random string, 32+ chars — generate with `openssl rand -base64 48`. Never reuse an example value; production refuses to start without a strong one. |
 | `PILOT_MODE` | `true` |
 | `TRIAL_MINUTES` | `2880` |
 | `ALLOW_MANUAL_UNLOCK` | `false` |

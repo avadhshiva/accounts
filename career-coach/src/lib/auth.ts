@@ -2,14 +2,14 @@ import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { ensureUserDefaults } from "./access";
+import { getAuthSecret } from "./authSecret";
 import { userRepo } from "./db";
 import { Plan, User } from "./types";
 
 const COOKIE = "pathly_session";
 
 function secretKey() {
-  const secret = process.env.AUTH_SECRET || "dev-secret-only";
-  return new TextEncoder().encode(secret);
+  return new TextEncoder().encode(getAuthSecret());
 }
 
 export function monthKey(d = new Date()) {
