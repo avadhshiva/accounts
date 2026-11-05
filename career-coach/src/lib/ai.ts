@@ -75,9 +75,49 @@ function mockAnalyze({ resumeText, role }: AnalyzeInput): AnalyzeResult {
   };
 }
 
+/** Thrown when no AI provider could produce a valid result. Routes map this to HTTP 503. */
+export class AiUnavailableError extends Error {
+  constructor(message = "AI scoring is temporarily unavailable") {
+    super(message);
+    this.name = "AiUnavailableError";
+  }
+}
+
+/** Response body contract for HTTP 503 when AI is unavailable. */
+export const AI_UNAVAILABLE_BODY = {
+  error: "Scoring is temporarily unavailable. Your attempt was not used. Please try again in a few minutes.",
+  code: "AI_UNAVAILABLE",
+  retryable: true,
+} as const;
+
+/** Mock output is allowed only for explicit local development, never in production. */
+export function mockAllowed() {
+  return process.env.ALLOW_MOCK_AI === "true" && process.env.NODE_ENV !== "production";
+}
+
+type ProviderName = "gemini" | "openai";
+
+const PROVIDER_TIMEOUT_MS = 20_000;
+
+function configuredProviders(): ProviderName[] {
+  const list: ProviderName[] = [];
+  if (process.env.GEMINI_API_KEY) list.push("gemini");
+  if (process.env.OPENAI_API_KEY) list.push("openai");
+  return list;
+}
+
+export function isAiConfigured() {
+  return configuredProviders().length > 0;
+}
+
+/** Throws AiUnavailableError if a new scored session could not be completed. */
+export function assertAiAvailableForSession() {
+  if (!isAiConfigured() && !mockAllowed()) throw new AiUnavailableError();
+}
+
 async function callGemini(prompt: string) {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return null;
+  if (!key) throw new Error("Gemini key missing");
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
   const res = await fetch(url, {
     method: "POST",
@@ -86,15 +126,16 @@ async function callGemini(prompt: string) {
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: { temperature: 0.4 },
     }),
+    signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`Gemini error ${res.status}`);
   const data = await res.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text as string;
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text as string | undefined;
 }
 
 async function callOpenAI(prompt: string) {
   const key = process.env.OPENAI_API_KEY;
-  if (!key) return null;
+  if (!key) throw new Error("OpenAI key missing");
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -109,10 +150,60 @@ async function callOpenAI(prompt: string) {
         { role: "user", content: prompt },
       ],
     }),
+    signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`OpenAI error ${res.status}`);
   const data = await res.json();
-  return data?.choices?.[0]?.message?.content as string;
+  return data?.choices?.[0]?.message?.content as string | undefined;
+}
+
+/**
+ * Try each configured provider in order (Gemini, then OpenAI). `handle` parses and
+ * validates the raw text; if it throws, that counts as a provider failure and the
+ * next provider is tried. Throws AiUnavailableError if none succeed.
+ */
+async function callAi<T>(
+  prompt: string,
+  handle: (text: string) => T,
+): Promise<{ value: T; provider: ProviderName }> {
+  const providers = configuredProviders();
+  if (providers.length === 0) throw new AiUnavailableError();
+  for (const provider of providers) {
+    try {
+      const text = provider === "gemini" ? await callGemini(prompt) : await callOpenAI(prompt);
+      if (!text || !text.trim()) throw new Error("Empty response");
+      return { value: handle(text), provider };
+    } catch (err) {
+      // Log only the failure reason, never prompt or resume content.
+      console.error(`[ai] ${provider} failed:`, err instanceof Error ? err.message : "unknown");
+    }
+  }
+  throw new AiUnavailableError();
+}
+
+function scoreInRange(v: unknown): number {
+  const n = typeof v === "number" ? v : typeof v === "string" && v.trim() !== "" ? Number(v) : NaN;
+  if (!Number.isFinite(n) || n < 0 || n > 100) throw new Error("Score out of range");
+  return n;
+}
+
+function stringArray(v: unknown): string[] {
+  if (!Array.isArray(v)) throw new Error("Expected array");
+  return v.map((x) => String(x));
+}
+
+function parseResumeResult(text: string): Omit<AnalyzeResult, "provider"> {
+  const parsed = extractJson(text);
+  if (typeof parsed.summary !== "string") throw new Error("Invalid summary");
+  if (!Array.isArray(parsed.rewrites)) throw new Error("Invalid rewrites");
+  return {
+    score: scoreInRange(parsed.score),
+    summary: parsed.summary,
+    strengths: stringArray(parsed.strengths),
+    gaps: stringArray(parsed.gaps),
+    rewrites: parsed.rewrites,
+    keywordsToAdd: stringArray(parsed.keywordsToAdd),
+  };
 }
 
 export async function analyzeResume(input: AnalyzeInput): Promise<AnalyzeResult> {
@@ -124,20 +215,11 @@ ${input.resumeText.slice(0, 12000)}
 """`;
 
   try {
-    const text = (await callGemini(prompt)) || (await callOpenAI(prompt));
-    if (!text) return mockAnalyze(input);
-    const parsed = extractJson(text);
-    return {
-      score: Number(parsed.score) || 60,
-      summary: String(parsed.summary || ""),
-      strengths: parsed.strengths || [],
-      gaps: parsed.gaps || [],
-      rewrites: parsed.rewrites || [],
-      keywordsToAdd: parsed.keywordsToAdd || [],
-      provider: process.env.GEMINI_API_KEY ? "gemini" : "openai",
-    };
-  } catch {
-    return mockAnalyze(input);
+    const { value, provider } = await callAi(prompt, parseResumeResult);
+    return { ...value, provider };
+  } catch (err) {
+    if (mockAllowed()) return mockAnalyze(input);
+    throw err instanceof AiUnavailableError ? err : new AiUnavailableError();
   }
 }
 
@@ -237,13 +319,24 @@ function mockScoreFor(mode: InterviewMode) {
   return byMode[mode];
 }
 
+export type InterviewReplyResult = {
+  message?: string;
+  overall?: number;
+  communication?: number;
+  clarity?: number;
+  depth?: number;
+  feedback?: string;
+  improvements?: string[];
+  provider: string;
+};
+
 export async function interviewReply(params: {
   mode: InterviewMode;
   history: { role: "coach" | "user"; content: string }[];
   userMessage?: string;
   finalize?: boolean;
   questionSet?: string[];
-}) {
+}): Promise<InterviewReplyResult> {
   const modeLabel = MODE_LABEL[params.mode];
   const starters =
     params.questionSet && params.questionSet.length > 0
@@ -251,36 +344,42 @@ export async function interviewReply(params: {
       : STARTERS[params.mode];
 
   if (params.finalize) {
-    const mockScore = mockScoreFor(params.mode);
     const prompt = `You are finishing a ${modeLabel} mock interview for an Indian engineering fresher.
 Conversation:
 ${params.history.map((m) => `${m.role}: ${m.content}`).join("\n")}
 Return JSON: overall, communication, clarity, depth (0-100), feedback (string), improvements (string[3]).`;
 
     try {
-      const text = (await callGemini(prompt)) || (await callOpenAI(prompt));
-      if (!text) return mockScore;
-      const parsed = extractJson(text);
-      return {
-        overall: Number(parsed.overall) || 70,
-        communication: Number(parsed.communication) || 70,
-        clarity: Number(parsed.clarity) || 70,
-        depth: Number(parsed.depth) || 70,
-        feedback: String(parsed.feedback || ""),
-        improvements: parsed.improvements || mockScore.improvements,
-        provider: process.env.GEMINI_API_KEY ? "gemini" : "openai",
-      };
-    } catch {
-      return mockScore;
+      const { value, provider } = await callAi(prompt, (text) => {
+        const parsed = extractJson(text);
+        if (typeof parsed.feedback !== "string" || !parsed.feedback.trim()) {
+          throw new Error("Invalid feedback");
+        }
+        return {
+          overall: scoreInRange(parsed.overall),
+          communication: scoreInRange(parsed.communication),
+          clarity: scoreInRange(parsed.clarity),
+          depth: scoreInRange(parsed.depth),
+          feedback: parsed.feedback,
+          improvements: stringArray(parsed.improvements),
+        };
+      });
+      return { ...value, provider };
+    } catch (err) {
+      if (mockAllowed()) return mockScoreFor(params.mode);
+      throw err instanceof AiUnavailableError ? err : new AiUnavailableError();
     }
   }
 
   if (!params.userMessage) {
+    // First question comes from the question set, but a session that can never be
+    // scored must not be created (it would burn an attempt).
+    assertAiAvailableForSession();
     return { message: starters[0], provider: "mock" };
   }
 
   const turn = params.history.filter((h) => h.role === "coach").length;
-  if (!process.env.GEMINI_API_KEY && !process.env.OPENAI_API_KEY) {
+  if (!isAiConfigured()) {
     const next = starters[Math.min(turn, starters.length - 1)];
     return {
       message:
@@ -299,9 +398,10 @@ user: ${params.userMessage}
 Reply with plain text only (the coach message).`;
 
   try {
-    const text = (await callGemini(prompt)) || (await callOpenAI(prompt));
-    return { message: (text || "").trim() || starters[0], provider: "live" };
+    const { value } = await callAi(prompt, (text) => text.trim());
+    return { message: value, provider: "live" };
   } catch {
+    // Mid-interview coach turns are not scores; a canned question is acceptable on a transient failure.
     return { message: starters[Math.min(turn, starters.length - 1)], provider: "mock" };
   }
 }

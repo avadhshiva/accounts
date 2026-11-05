@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import { analyzeResume } from "@/lib/ai";
+import { AI_UNAVAILABLE_BODY, AiUnavailableError, analyzeResume } from "@/lib/ai";
 import { resumeRepo, userRepo } from "@/lib/db";
 import { canUse } from "@/lib/limits";
 import { assertFeatureAccess } from "@/lib/guard";
@@ -28,6 +28,8 @@ export async function POST(req: Request) {
       );
     }
 
+    // analyzeResume throws AiUnavailableError on failure, so quota and persistence
+    // below are only reached for a genuine AI result. Do not reorder.
     const result = await analyzeResume(body);
     await userRepo.incrementUsage(user.id, "resumeAnalyses");
 
@@ -46,6 +48,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ analysis: saved, provider: result.provider });
   } catch (e) {
+    if (e instanceof AiUnavailableError) {
+      return NextResponse.json(AI_UNAVAILABLE_BODY, { status: 503 });
+    }
     if (e instanceof z.ZodError) {
       return NextResponse.json({ error: "Paste a longer resume (80+ chars)" }, { status: 400 });
     }

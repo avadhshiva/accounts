@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { interviewReply } from "@/lib/ai";
+import { AI_UNAVAILABLE_BODY, AiUnavailableError, interviewReply } from "@/lib/ai";
 import { interviewRepo } from "@/lib/db";
 import { assertFeatureAccess } from "@/lib/guard";
 
@@ -79,7 +79,11 @@ export async function POST(req: Request) {
     });
     await interviewRepo.update(session);
     return NextResponse.json({ session });
-  } catch {
+  } catch (e) {
+    // Nothing is persisted before interviewRepo.update, so the session stays active and retryable.
+    if (e instanceof AiUnavailableError) {
+      return NextResponse.json(AI_UNAVAILABLE_BODY, { status: 503 });
+    }
     return NextResponse.json({ error: "Reply failed" }, { status: 400 });
   }
 }

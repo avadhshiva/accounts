@@ -26,19 +26,31 @@ export default function ResumeClient({ initialRole }: { initialRole: string }) {
   async function analyze() {
     setLoading(true);
     setError("");
-    const res = await fetch("/api/resume/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resumeText, role }),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      setError(data.error || "Failed");
+    let res: Response;
+    let data: { error?: string; code?: string; analysis?: Analysis; provider?: string };
+    try {
+      res = await fetch("/api/resume/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeText, role }),
+      });
+      data = await res.json();
+    } catch {
+      setLoading(false);
+      setError("Could not reach the server. Your attempt was not used. Please try again.");
       return;
     }
-    setAnalysis(data.analysis);
-    setProvider(data.provider);
+    setLoading(false);
+    if (!res.ok) {
+      setError(
+        data.code === "AI_UNAVAILABLE"
+          ? "Scoring is temporarily unavailable. Your attempt was not used. Please try again in a few minutes."
+          : data.error || "Failed",
+      );
+      return;
+    }
+    setAnalysis(data.analysis ?? null);
+    setProvider(data.provider ?? "");
   }
 
   return (
