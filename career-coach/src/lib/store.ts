@@ -2,7 +2,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import { DbShape } from "./types";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+// DATA_DIR overrides the JSON store location (used by tests); default unchanged.
+const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), "data");
 const DB_FILE = path.join(DATA_DIR, "db.json");
 
 const emptyDb = (): DbShape => ({

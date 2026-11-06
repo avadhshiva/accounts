@@ -231,10 +231,12 @@ describe("practice limit-safety contracts", () => {
   it("HR warm-up is gated to hr + assess and both CTAs call startAssessment", async () => {
     const fs = await import("node:fs/promises");
     const path = await import("node:path");
-    const src = await fs.readFile(
-      path.join(process.cwd(), "src/app/interview/InterviewClient.tsx"),
-      "utf8",
-    );
+    const src = (
+      await fs.readFile(
+        path.join(process.cwd(), "src/app/interview/InterviewClient.tsx"),
+        "utf8",
+      )
+    ).replace(/\r\n/g, "\n");
     expect(src).toMatch(/if \(mode === "hr"\)[\s\S]*?setPhase\("hr-warmup"\)/);
     expect(src).toContain("onSkip={() => {\n            void startAssessment();");
     expect(src).toContain(
