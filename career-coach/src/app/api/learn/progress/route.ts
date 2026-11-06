@@ -5,7 +5,8 @@ import { normalizeCompleted } from "@/lib/learn/merge";
 import { progressRepo } from "@/lib/db";
 
 const patchSchema = z.object({
-  completed: z.array(z.string().min(1).max(120)),
+  // Cap well above the lesson count (17) so the route rejects oversized payloads.
+  completed: z.array(z.string().min(1).max(120)).max(50),
 });
 
 function toClientProgress(row: { learnCompleted: string[]; updatedAt: string }) {
