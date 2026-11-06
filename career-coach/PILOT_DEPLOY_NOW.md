@@ -30,6 +30,7 @@
 | `AUTH_SECRET` | Required. Random string, 32+ chars — generate with `openssl rand -base64 48`. Never reuse an example value; production refuses to start without a strong one. |
 | `PILOT_MODE` | `true` |
 | `TRIAL_MINUTES` | `2880` |
+| `INVITE_CODES` | Optional. Comma-separated private, strong random codes (e.g. `openssl rand -hex 12`). Leave unset/empty to disable invite redemption. There are no default codes; never commit real codes. |
 | `ALLOW_MANUAL_UNLOCK` | `false` |
 | `ALLOW_TEST_PRO` | `false` |
 | `NEXT_PUBLIC_APP_NAME` | `Pathly` |

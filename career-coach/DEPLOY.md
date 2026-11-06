@@ -15,6 +15,7 @@ Give 4–5 students a **public URL**, 48-hour trial, collect feedback. **No paym
    - `AUTH_SECRET` = long random string  
    - `PILOT_MODE=true`  
    - `TRIAL_MINUTES=2880`  
+   - `INVITE_CODES` = optional comma-separated private, strong random codes (`openssl rand -hex 12`). Empty/unset disables invite redemption; there are no defaults. Never commit real codes.
    - optional `NEXT_PUBLIC_FEEDBACK_FORM_URL` = your Google Form link  
 7. Add a **volume** at `/app/data` (or path matching `data/`) so signups/feedback persist  
 8. Generate domain → share `https://your-app.up.railway.app`

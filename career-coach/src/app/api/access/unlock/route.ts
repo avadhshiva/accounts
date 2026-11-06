@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionUser, publicUser } from "@/lib/auth";
@@ -14,6 +15,25 @@ const schema = z.object({
   upiReference: z.string().optional(),
 });
 
+function digest(value: string) {
+  return createHash("sha256").update(value).digest();
+}
+
+/**
+ * Constant-time match: both sides are hashed to fixed-length digests so
+ * length differences cannot throw or leak, and every configured code is
+ * compared (no early exit).
+ */
+function matchesInviteCode(candidate: string, codes: string[]) {
+  if (!candidate) return false;
+  const candidateDigest = digest(candidate);
+  let matched = false;
+  for (const code of codes) {
+    if (timingSafeEqual(candidateDigest, digest(code))) matched = true;
+  }
+  return matched;
+}
+
 export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Login required" }, { status: 401 });
@@ -23,7 +43,7 @@ export async function POST(req: Request) {
 
     if (body.method === "invite") {
       const code = (body.inviteCode || "").trim().toUpperCase();
-      if (!getInviteCodes().includes(code)) {
+      if (!matchesInviteCode(code, getInviteCodes())) {
         return NextResponse.json({ error: "Invalid invite code" }, { status: 400 });
       }
       const updated = await userRepo.unlockAccess(user.id, {
