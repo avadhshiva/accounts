@@ -32,7 +32,7 @@ This document captures the repository audit, gaps, recommended architecture, pha
 | Validation | Zod 4 |
 | Storage | File-based JSON (`data/db.json`) via `src/lib/store.ts` |
 | AI | Gemini 2.0 Flash (primary) or OpenAI gpt-4o-mini (fallback); mock when no keys |
-| Email | Brevo HTTP API (Render-compatible), Resend, Gmail SMTP fallback |
+| Email | Brevo HTTP API (Render-compatible), Resend fallback |
 | Deploy | Render (`render.yaml`), rootDir `career-coach`, Node 20 |
 | Repo | Monorepo `avadhshiva/accounts` — app in `career-coach/` |
 
