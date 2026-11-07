@@ -1,4 +1,3 @@
-import nodemailer from "nodemailer";
 import { APP_NAME } from "./brand";
 
 type SendEmailInput = {
@@ -15,8 +14,6 @@ export function appBaseUrl() {
 function defaultFrom() {
   const brevoSender = process.env.BREVO_SENDER_EMAIL?.trim();
   if (brevoSender) return `${APP_NAME} <${brevoSender}>`;
-  const gmailUser = process.env.GMAIL_USER?.trim();
-  if (gmailUser) return `${APP_NAME} <${gmailUser}>`;
   return process.env.EMAIL_FROM || `${APP_NAME} <onboarding@resend.dev>`;
 }
 
@@ -75,39 +72,8 @@ async function sendViaResend(input: SendEmailInput): Promise<{ ok: boolean; erro
   return { ok: true };
 }
 
-/** Gmail SMTP — works locally and on paid Render; blocked on Render free tier (ports 587/465). */
-async function sendViaGmail(input: SendEmailInput): Promise<{ ok: boolean; error?: string }> {
-  const user = process.env.GMAIL_USER?.trim();
-  const pass = process.env.GMAIL_APP_PASSWORD?.replace(/\s/g, "");
-  if (!user || !pass) return { ok: false, error: "Gmail SMTP not configured" };
-
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: { user, pass },
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 10_000,
-  });
-
-  try {
-    await transporter.sendMail({
-      from: defaultFrom(),
-      to: input.to,
-      subject: input.subject,
-      text: input.text,
-      html: input.html,
-    });
-    return { ok: true };
-  } catch (e) {
-    const message = e instanceof Error ? e.message : "Gmail send failed";
-    return { ok: false, error: message };
-  }
-}
-
 /**
- * Email providers (Render free tier: use brevo or resend — NOT gmail SMTP).
+ * Email providers: Brevo and Resend (both plain HTTPS APIs, so they work on Render free tier).
  * Priority follows EMAIL_PROVIDER, then sensible fallbacks.
  */
 export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; error?: string }> {
@@ -116,10 +82,9 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; e
   const senders: Record<string, () => Promise<{ ok: boolean; error?: string }>> = {
     brevo: () => sendViaBrevo(input),
     resend: () => sendViaResend(input),
-    gmail: () => sendViaGmail(input),
   };
 
-  const order = [prefer, "brevo", "resend", "gmail"].filter(
+  const order = [prefer, "brevo", "resend"].filter(
     (name, i, arr) => arr.indexOf(name) === i,
   );
 
@@ -141,6 +106,6 @@ export async function sendEmail(input: SendEmailInput): Promise<{ ok: boolean; e
   return {
     ok: false,
     error:
-      "Could not send email. On Render free tier use Brevo (BREVO_API_KEY + BREVO_SENDER_EMAIL). Gmail SMTP is blocked on Render free.",
+      "Could not send email. Configure Brevo (BREVO_API_KEY + BREVO_SENDER_EMAIL) or Resend (RESEND_API_KEY).",
   };
 }

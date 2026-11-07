@@ -122,11 +122,20 @@ export function getAccessSnapshot(user: User, now = Date.now()): AccessSnapshot 
   };
 }
 
-export function getInviteCodes(): string[] {
-  return (process.env.INVITE_CODES || "PATHLY-DEMO,PATHLY-STUDENT")
+/**
+ * Configured invite codes (trimmed, uppercased, de-blanked, de-duplicated).
+ * There are NO built-in defaults: unset/empty INVITE_CODES disables redemption.
+ */
+export function getInviteCodes(
+  env: Record<string, string | undefined> = process.env,
+): string[] {
+  const raw = env.INVITE_CODES;
+  if (!raw) return [];
+  const codes = raw
     .split(",")
     .map((c) => c.trim().toUpperCase())
     .filter(Boolean);
+  return [...new Set(codes)];
 }
 
 export function getFeedbackFormUrl() {

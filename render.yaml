@@ -22,6 +22,9 @@ services:
         value: "true"
       - key: TRIAL_MINUTES
         value: "10080"
+      # INVITE_CODES — set in Render dashboard (comma-separated, strong random). Do not commit.
+      - key: INVITE_CODES
+        sync: false
       - key: ALLOW_MANUAL_UNLOCK
         value: "false"
       - key: ALLOW_TEST_PRO

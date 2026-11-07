@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Fraunces, Manrope } from "next/font/google";
 import { APP_METADATA_DESCRIPTION, APP_METADATA_TITLE } from "@/lib/brand";
 import "./globals.css";
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
   description: APP_METADATA_DESCRIPTION,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable} h-full`}>
       <body className="min-h-full antialiased">{children}</body>

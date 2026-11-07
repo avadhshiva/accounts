@@ -15,6 +15,8 @@ Give 4–5 students a **public URL**, 48-hour trial, collect feedback. **No paym
    - `AUTH_SECRET` = long random string  
    - `PILOT_MODE=true`  
    - `TRIAL_MINUTES=2880`  
+   - `INVITE_CODES` = optional comma-separated private, strong random codes (`openssl rand -hex 12`). Empty/unset disables invite redemption; there are no defaults. Never commit real codes.
+   - Password-reset email: `EMAIL_PROVIDER=brevo` + `BREVO_API_KEY` + `BREVO_SENDER_EMAIL` (verify the sender in Brevo), or `RESEND_API_KEY` + `EMAIL_FROM` for Resend. Without one of these, password reset returns 503.
    - optional `NEXT_PUBLIC_FEEDBACK_FORM_URL` = your Google Form link  
 7. Add a **volume** at `/app/data` (or path matching `data/`) so signups/feedback persist  
 8. Generate domain → share `https://your-app.up.railway.app`

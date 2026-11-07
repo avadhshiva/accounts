@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: career-coach
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: career-coach/package-lock.json
+
+      # Isolated, throwaway configuration: JSON storage in a temp dir, a random
+      # per-run dummy secret, and no database or production credentials.
+      - name: Configure isolated environment
+        run: |
+          echo "STORAGE_BACKEND=json" >> "$GITHUB_ENV"
+          echo "DATA_DIR=${RUNNER_TEMP}/launchrole-data" >> "$GITHUB_ENV"
+          echo "AUTH_SECRET=ci-$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+
+      - run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

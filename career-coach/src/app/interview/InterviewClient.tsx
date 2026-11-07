@@ -167,7 +167,7 @@ export default function InterviewClient() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mode }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}) as { error?: string; code?: string });
     if (!res.ok) {
       setLoading(false);
       setError(data.error || "Could not start");
@@ -221,10 +221,14 @@ export default function InterviewClient() {
         finish,
       }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}) as { error?: string; code?: string });
     setLoading(false);
     if (!res.ok) {
-      setError(data.error || "Failed");
+      setError(
+        data.code === "AI_UNAVAILABLE"
+          ? "Couldn't score your interview right now. Your progress is kept. You can retry Finish shortly."
+          : data.error || "Failed",
+      );
       return;
     }
     setSession(data.session);

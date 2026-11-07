@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import { interviewReply } from "@/lib/ai";
+import { AI_UNAVAILABLE_BODY, AiUnavailableError, interviewReply } from "@/lib/ai";
 import { interviewRepo } from "@/lib/db";
 import {
   canStartAssessmentForMode,
@@ -54,7 +54,10 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ session });
-  } catch {
+  } catch (e) {
+    if (e instanceof AiUnavailableError) {
+      return NextResponse.json(AI_UNAVAILABLE_BODY, { status: 503 });
+    }
     return NextResponse.json({ error: "Could not start interview" }, { status: 400 });
   }
 }

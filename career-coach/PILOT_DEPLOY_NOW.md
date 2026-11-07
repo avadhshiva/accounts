@@ -27,9 +27,13 @@
 
 | Variable | Value |
 |----------|--------|
-| `AUTH_SECRET` | Any long random string (32+ chars) e.g. `pathly-pilot-secret-aug2026-xyz123` |
+| `AUTH_SECRET` | Required. Random string, 32+ chars — generate with `openssl rand -base64 48`. Never reuse an example value; production refuses to start without a strong one. |
 | `PILOT_MODE` | `true` |
 | `TRIAL_MINUTES` | `2880` |
+| `INVITE_CODES` | Optional. Comma-separated private, strong random codes (e.g. `openssl rand -hex 12`). Leave unset/empty to disable invite redemption. There are no default codes; never commit real codes. |
+| `EMAIL_PROVIDER` | `brevo` (default) or `resend`. Needed for password-reset emails. |
+| `BREVO_API_KEY` + `BREVO_SENDER_EMAIL` | Brevo (free; works on Render free tier). Verify the sender address in Brevo first. |
+| `RESEND_API_KEY` + `EMAIL_FROM` | Optional Resend fallback. Without a verified domain Resend only delivers to your own signup address. |
 | `ALLOW_MANUAL_UNLOCK` | `false` |
 | `ALLOW_TEST_PRO` | `false` |
 | `NEXT_PUBLIC_APP_NAME` | `Pathly` |
